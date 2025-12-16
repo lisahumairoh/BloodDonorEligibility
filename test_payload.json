@@ -1,0 +1,8 @@
+{
+    "hospitalName": "Test Hospital",
+    "bloodBags": "1",
+    "bloodType": "A",
+    "rhesus": "negatif",
+    "urgencyLevel": "sedang",
+    "searchRadius": "50"
+}

@@ -1,0 +1,12 @@
+{
+    "name": "Test User",
+    "blood_group": "A+",
+    "availability": "Yes",
+    "months_since_first_donation": 12,
+    "number_of_donation": 5,
+    "usia": 30,
+    "berat_badan": 80,
+    "hb_level": 10.0,
+    "riwayat_penyakit": "Hipertensi",
+    "jarak_ke_rs_km": 5.0
+}

@@ -47,8 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Siapkan data untuk prediksi ML
     $ml_data = [
         'name' => $data['name'],
-        // Strip rhesus sign (+/-) for ML model because encoders expects 'A', 'B', 'AB', 'O' only
-        'blood_group' => preg_replace('/[+-]$/', '', $data['blood_group']),
+        // Keep rhesus sign (+/-) for ML model because encoders expects it (e.g. 'A+', 'O-')
+        'blood_group' => $data['blood_group'],
         'availability' => $availability,
         'months_since_first_donation' => $months_since_first_donation,
         'number_of_donation' => $number_of_donation,

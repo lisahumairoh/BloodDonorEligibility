@@ -1,170 +1,151 @@
-# Panduan Pengembangan Sistem Prediksi Kelayakan Donor Darah
+# Panduan Teknis & Logika Sistem Donor Darah
 
-Dokumen ini berisi informasi mengenai struktur project, persyaratan sistem, instalasi, dan panduan untuk mengembangkan sistem prediksi kelayakan donor darah ini.
+Dokumen ini berisi dokumentasi mendalam mengenai alur logika, algoritma, dan arsitektur teknis dari proyek Sistem Rekomendasi Donor Darah. Gunakan dokumen ini sebagai referensi untuk pemeliharaan dan pengembangan lanjutan.
 
-## Deskripsi Project
+## 1. Arsitektur Sistem
 
-Sistem ini adalah aplikasi berbasis web yang bertujuan untuk memprediksi apakah seorang calon pendonor darah layak untuk mendonorkan darahnya atau tidak.
-Sistem ini menggunakan algoritma **Machine Learning (Random Forest)** yang diimplementasikan dengan **Python**, dan antarmuka web yang dibangun dengan **PHP**.
+Sistem dibangun dengan arsitektur **Hybrid Monolithic**, di mana:
+- **Frontend & Backend**: Digabung menggunakan PHP Native.
+- **Intelligence Layer**: Terpisah menggunakan Python (Machine Learning), yang dipanggil oleh PHP via `exec` cmd.
 
-### Teknologi yang Digunakan
-- **Backend & Frontend**: Native PHP
-- **Machine Learning**: Python (scikit-learn, pandas, numpy)
-- **Database**: MySQL
-- **Model Format**: Pickle (.pkl)
+### Struktur Modul
+1. **Module Registrasi (`input_donor.php`)**: Interface pendaftaran donor.
+2. **Module Pencarian (`index.php`)**: Interface pencari darah.
+3. **Module API (`api/`)**: Menangani logika bisnis dan komunikasi database.
+4. **Module ML (`ml/`)**: Menangani prediksi cerdas.
 
-## Struktur Folder
+---
 
-```
-blood_donation/
-├── api/                    # Backend API PHP
-│   ├── config.php          # Konfigurasi database & path Python
-│   ├── db.php              # Class koneksi database
-│   ├── add_donor.php       # Endpoint untuk menambah data donor & prediksi
-│   ├── run_prediction.php  # Endpoint khusus untuk testing prediksi
-│   └── ...
-├── ml/                     # Machine Learning Component
-│   ├── predict.py          # Script Python untuk load model & prediksi
-│   ├── blood_donor_model.pkl # Model Random Forest yang sudah dilatih
-│   ├── encoders_final.pkl  # Encoder untuk data kategorikal
-│   └── feature_names.pkl   # Daftar fitur yang digunakan model
-├── assets/                 # File statis (CSS, JS, Images)
-├── index.php               # Halaman utama
-└── app_instruction.md      # Panduan ini
-```
+## 2. Alur Logika Utama
 
-## Persyaratan Sistem
+### A. Alur Pendaftaran & Validasi Donor (Hybrid logic)
 
-Sebelum menjalankan project, pastikan sistem Anda memiliki:
+Sistem menggunakan pendekatan **Hybrid Validation** untuk menentukan status `status_layak` (Eligible) seorang donor.
 
-1.  **Web Server & PHP**: XAMPP (Direkomendasikan) atau sejenisnya.
-2.  **Database**: MySQL (bawaan XAMPP).
-3.  **Python**: Versi 3.x terinstall dan terdaftar di PATH system (bisa dipanggil via terminal dengan perintah `python`).
-4.  **Library Python**: Install library yang dibutuhkan:
+**Flowchart:**
+`User Input` -> `API (api/add_donor.php)` -> `Coba ML Prediction` -> `Jika Error, Gunakan Fallback Manual` -> `Save ke Database`.
 
-    ```bash
-    pip install pandas numpy scikit-learn joblib
-    ```
+#### 1. Machine Learning Check (Prioritas Utama)
+- **File**: `ml/predict.py`
+- **Trigger**: Dipanggil oleh `api/add_donor.php`.
+- **Input Features**:
+  - `hb_level`: Kadar hemoglobin.
+  - `berat_badan`: Berat badan (kg).
+  - `usia`: Usia donor.
+  - `riwayat_penyakit`: (One-hot encoded).
+  - **Engineered Features** (Dihitung internal oleh script):
+    - `health_score`: Skor komposit dari HB, Berat, dan Penyakit.
+    - `frekuensi_donor`: Konsistensi donor (Jumlah donor / Lama jadi donor).
+    - `kategori_hb`: Kategorisasi (Rendah/Normal/Tinggi).
+- **Output**: Probabilitas (0.0 - 1.0) dan Status Layak (0/1). A
 
-## Instalasi & Konfigurasi
+#### 2. Manual Rule-Based Fallback (Cadangan)
+Jika script Python gagal dijalankan (misal error library/path), PHP akan mengambil alih dengan aturan baku (`check_eligibility_manual` di `api/add_donor.php`):
 
-### 1. Konfigurasi Database
+| Parameter | Syarat Layak |
+|-----------|--------------|
+| Usia | 17 - 65 tahun |
+| Berat Badan | Min 45 kg |
+| HB Level | Pria: ≥ 13.5, Wanita: ≥ 12.5 |
+| Penyakit | Bebas Hepatitis & Jantung |
+| Ketersediaan | Harus "Yes" |
 
-1.  Buka **phpMyAdmin** (biasanya di `http://localhost/phpmyadmin`).
-2.  Buat database baru dengan nama: `blood_donation`.
-3.  Jalankan query SQL berikut untuk membuat tabel-tabel yang diperlukan:
+---
+
+### B. Alur Pencarian & Rekomendasi 
+
+Logika bagaimana sistem menemukan donor yang tepat untuk suatu permintaan.
+
+**File**: `api/request_blood.php`
+
+#### 1. Logika Pencarian Golongan Darah (SQL Matching)
+Sistem menggunakan `LIKE` matching untuk menangani kecocokan Rhesus.
+- **Request "O"**: Akan mencari `blood_group LIKE 'O%'`.
+- **Hasil**: Menemukan donor **O+** dan **O-**.
+- **Request "A"**: Akan mencari `blood_group LIKE 'A%'` TAPI `NOT LIKE 'AB%'` (untuk mencegah tercampur dengan AB).
+
+#### 2. Algoritma Ranking (Scoring System)
+Setiap donor yang cocok akan diberi nilai (`match_score`) 1.0 - 5.0 berdasarkan:
+
+1. **Jarak (Logistik)**:
+   - < 2km: +0.5 poin
+   - < 5km: +0.3 poin
+2. **Kesehatan Fisik**:
+   - HB Prima (14-16): +0.3 poin
+   - Berat Badan > 65kg: +0.2 poin
+3. **Rekam Jejak**:
+   - Donor Veteran (>10x): +0.2 poin
+4. **Penalty**:
+   - Jarang aktif (>24 bulan vakum): -0.2 poin
+
+---
+
+## 3. Database Schema
 
 ### Tabel `donors`
-Menyimpan data pendaftar donor darah.
-```sql
-CREATE TABLE `donors` (
-  `donor_id` varchar(50) NOT NULL,
-  `name` varchar(100) NOT NULL,
-  `email` varchar(100) DEFAULT NULL,
-  `contact_number` varchar(20) DEFAULT NULL,
-  `city` varchar(50) DEFAULT 'Jakarta',
-  `blood_group` varchar(5) NOT NULL,
-  `availability` varchar(10) DEFAULT 'Yes',
-  `months_since_first_donation` int(11) DEFAULT 0,
-  `number_of_donation` int(11) DEFAULT 0,
-  `created_at` date NOT NULL,
-  `usia` int(11) NOT NULL,
-  `berat_badan` int(11) NOT NULL,
-  `hb_level` decimal(4,1) NOT NULL,
-  `riwayat_penyakit` varchar(50) DEFAULT 'Tidak',
-  `jarak_ke_rs_km` decimal(5,1) DEFAULT 0.0,
-  `status_layak` tinyint(1) DEFAULT 0,
-  `last_update` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`donor_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
-
-### Tabel `blood_requests`
-Menyimpan data permintaan darah.
-```sql
-CREATE TABLE `blood_requests` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `request_id` varchar(50) DEFAULT NULL,
-  `requester_name` varchar(100) DEFAULT NULL,
-  `hospital_name` varchar(100) DEFAULT NULL,
-  `blood_type` varchar(5) DEFAULT NULL,
-  `urgency_level` varchar(20) DEFAULT NULL,
-  `blood_bags` int(11) DEFAULT NULL,
-  `search_radius` int(11) DEFAULT NULL,
-  `request_date` datetime DEFAULT current_timestamp(),
-  `status` enum('pending','processing','completed','cancelled') DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `request_id` (`request_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
+Menyimpan profil pendonor.
+- `blood_group`: Disimpan lengkap dengan rhesus (contoh: 'A+', 'B-'). *PENTING: Jangan ubah format ini karena ML dan Search Logic bergantung padanya.*
+- `status_layak`: 1 (Layak) atau 0 (Tidak). Hasil dari ML/Manual check saat register.
+- `jarak_ke_rs_km`: Disimpan statis saat register (dalam implementasi nyata, ini harusnya dihitung dinamis menggunakan Geolocation API).
 
 ### Tabel `recommendations`
-Menyimpan history rekomendasi donor.
-```sql
-CREATE TABLE `recommendations` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `request_id` varchar(50) DEFAULT NULL,
-  `donor_id` varchar(50) DEFAULT NULL,
-  `match_score` decimal(5,2) DEFAULT NULL,
-  `distance` decimal(5,2) DEFAULT NULL,
-  `recommended_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `request_id` (`request_id`),
-  KEY `donor_id` (`donor_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
+Menyimpan hasil pencarian agar tidak perlu hitung ulang.
+- `match_score`: Nilai kecocokan final.
+- `distance`: Jarak saat rekomendasi dibuat.
 
-### 2. Konfigurasi Aplikasi
+---
 
-Buka file `api/config.php` dan pastikan konfigurasi sudah sesuai dengan environment Anda.
+## 4. Troubleshooting Umum
 
-```php
-// Konfigurasi database
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', ''); // Sesuaikan jika ada password
-define('DB_NAME', 'blood_donation');
+**Masalah 1: Probabilitas Kelayakan Selalu 10%**
+- **Penyebab**: Script Python gagal berjalan, sistem masuk ke mode Fallback Manual.
+- **Solusi**: Cek instalasi library python (`pip install pandas scikit-learn`), cek path python di `api/config.php`, atau cek data input (misal nama feature tidak cocok dengan model).
 
-// Konfigurasi Python
-// Jika python tidak di PATH, ganti dengan full path, misal: "C:\\Python39\\python.exe"
-define('PYTHON_PATH', 'python'); 
-```
+**Masalah 2: Pencarian Kosong (Padahal Gol. Darah Cocok)**
+- **Penyebab**: Logika SQL terlalu ketat (misal `WHERE blood_group = 'O'`) padahal data di DB `O+`.
+- **Solusi**: Gunakan `LIKE 'O%'` seperti yang sudah diimplementasikan di `api/request_blood.php`.
 
-## Alur Kerja Sistem
+**Masalah 3: UI Slider/Radio Tidak Bisa Diklik**
+- **Penyebab**: Fungsi Javascript `setupRadiusSlider()` atau `setupRadioButtons()` hilang atau error sebelum dipanggil.
+- **Solusi**: Pastikan block `<script>` di `index.php` lengkap dan tidak ada syntax error.
 
-Sistem ini memiliki dua modul utama:
 
-### 1. Pendaftaran Donor & Prediksi Kelayakan (input_donor.php)
-Halaman ini (`input_donor.php`) digunakan oleh calon donor untuk mendaftar.
-1.  **User Input**: User mengisi form data diri dan medis.
-2.  **API Call**: Data dikirim ke `api/add_donor.php`.
-3.  **ML Prediction**: Backend memanggil script Python untuk memprediksi kelayakan (Layak/Tidak) berdasarkan data medis (Hb, Usia, Berat Badan, Penyakit).
-4.  **Database**: Data donor disimpan dengan status kelayakannya.
-5.  **Feedback**: User mendapat notifikasi apakah mereka layak donor atau tidak.
 
-### 2. Pencarian Donor (index.php)
-Halaman utama (`index.php`) digunakan oleh pencari darah / RS.
-1.  **Request**: User memasukkan kebutuhan darah (Gol. Darah, Lokasi, Urgensi).
-2.  **Search**: Sistem mencari donor di database yang:
-    *   Golongan darah sesuai/kompatibel.
-    *   Berstatus **LAYAK** (hasil prediksi ML).
-    *   Lokasi terjangkau (dalam radius km).
-3.  **Result**: Menampilkan daftar donor rekomendasi yang memenuhi kriteria.
+Berdasarkan analisis file 
+ml/predict.py
+, berikut adalah parameter yang dipelajari dan menentukan keputusan AI:
 
-## Panduan Pengembangan
+1. Parameter Input Langsung (Direct Features) AI menganalisis data mentah yang Anda masukkan:
 
-### Mengubah Model ML
-Jika Anda melatih ulang model:
-1.  Pastikan format input (fitur) sama dengan yang diharapkan di `ml/predict.py`.
-2.  Simpan model baru ke `ml/blood_donor_model.pkl`.
-3.  Jika encoders berubah, update `ml/encoders_final.pkl`.
+Profil Medis: Kadar Hemoglobin (HB), Berat Badan, Usia.
+Riwayat Penyakit: Hipertensi, Diabetes, Jantung, Hepatitis (AI memberi bobot negatif berat pada ini).
+Golongan Darah: Termasuk Rhesus (+/-).
+Rekam Jejak: Jumlah donor sebelumnya dan berapa bulan sejak donor pertama.
+2. Pola Tersembunyi yang Dipelajari (Engineered Features) Di sinilah letak "kecerdasan" model ini. Selain membaca angka mentah, script 
+predict.py
+ menghitung indikator kesehatan yang lebih dalam:
 
-### Mengubah Logika Data
-*   File `ml/predict.py`: Mengatur logika preprocessing data sebelum masuk ke model (One-Hot Encoding, Feature Engineering).
-*   File `api/add_donor.php`: Mengatur validasi input dari user sebelum dikirim ke Python.
 
-### Troubleshooting
-Jika prediksi gagal:
-1.  Cek apakah Python bisa dijalankan lewat CMD/Terminal.
-2.  Pastikan library scikit-learn terinstall.
-3.  Jika muncul error di PHP, cek `api/config.php` bagian `PYTHON_PATH`.
+
+Berdasarkan analisa kode di input_donor.php dan api/add_donor.php, sistem ini menggunakan Pendekatan Hybrid (Cerdas & Manual) untuk menentukan kelayakan donor:
+
+Prioritas Utama: Machine Learning (AI) Sistem akan mencoba menjalankan script cerdas (ml/predict.py) terlebih dahulu. Model ini mempelajari pola dari data historis untuk memprediksi probabilitas kelayakan seseorang.
+Fallback: Rule-Based (SOP Standar) Jika sistem AI tidak bisa dijalankan (misal Python bermasalah), sistem otomatis beralih ke pengecekan manual standar PMI yang tertulis di kode PHP (check_eligibility_manual), yaitu:
+Usia: Wajib 17 - 65 tahun.
+Berat Badan: Minimal 45 kg.
+HB Level: Minimal 12.5 (Wanita) atau 13.5 (Pria).
+Riwayat Penyakit: Tidak boleh ada Hepatitis atau Jantung.
+Ketersediaan: Status harus "Yes".
+Jadi sistem ini cukup robust; ia mencoba cara "pintar" dulu, tapi tetap punya standar baku sebagai pengaman.
+
+
+Konsistensi Donor (frekuensi_donor): Rasio antara jumlah donor dibagi lama waktu jadi pendonor. AI belajar bahwa pendonor yang rutin (frekuensi stabil) biasanya lebih sehat dan darahnya lebih aman dibanding yang jarang-jarang.
+Skor Kesehatan Komposit (health_score): Rumus khusus yang menggabungkan HB + Berat Badan + Status Penyakit menjadi satu nilai tunggal.
+Rumus di code: 
+(HB/17 * 4) + (Bonus Berat Badan) + (Bonus Sehat)
+.
+Kategorisasi Risiko: AI tidak hanya melihat angka "25 tahun", tapi mengelompokkannya ke kategori risiko (Muda, Dewasa, Tua) dan level HB (Rendah, Normal, Tinggi) untuk mencocokkan dengan pola statistik kelayakan medis.
+Ringkasan Cara Kerjanya: AI ini telah dilatih (.pkl file) dengan data historis. Ia "tahu" kombinasi mana yang beresiko.
+
+Contoh: Seseorang berat 50kg (batas bawah) tapi HB-nya sangat bagus (16) dan masih muda, mungkin diprediksi LAYAK karena skor kesehatannya tinggi.
+Sedangkan yang berat 80kg tapi HB rendah dan punya riwayat hipertensi akan diprediksi TIDAK LAYAK.

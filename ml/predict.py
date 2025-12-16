@@ -23,8 +23,9 @@ def predict_donor_eligibility(donor_data):
         df = pd.DataFrame([donor_data])
         
         # Encode categorical features
-        df['blood_group_encoded'] = encoders['blood'].transform([donor_data['blood_group']])[0]
-        df['riwayat_penyakit_encoded'] = encoders['penyakit'].transform([donor_data['riwayat_penyakit']])[0]
+        # Note: Keys in pickle file have '_encoder' suffix
+        df['blood_group_encoded'] = encoders['blood_encoder'].transform([donor_data['blood_group']])[0]
+        df['riwayat_penyakit_encoded'] = encoders['penyakit_encoder'].transform([donor_data['riwayat_penyakit']])[0]
         
         # One-hot encoding for penyakit
         penyakit_mapping = {
@@ -48,15 +49,25 @@ def predict_donor_eligibility(donor_data):
         hb_bins = [11, 12.0, 13.0, 14.0, 17]
         hb_labels = ['sangat_rendah', 'rendah', 'normal', 'tinggi']
         df['kategori_hb_encoded'] = pd.cut([donor_data['hb_level']], bins=hb_bins, labels=hb_labels)[0]
-        df['kategori_hb_encoded'] = encoders['kategori_hb'].transform([df['kategori_hb_encoded'].iloc[0]])[0]
+        df['kategori_hb_encoded'] = encoders['kategori_hb_encoder'].transform([df['kategori_hb_encoded'].iloc[0]])[0]
         
         usia_bins = [17, 30, 45, 65]
         usia_labels = ['muda', 'dewasa', 'tua']
         df['usia_kategori_encoded'] = pd.cut([donor_data['usia']], bins=usia_bins, labels=usia_labels)[0]
-        df['usia_kategori_encoded'] = encoders['usia_kategori'].transform([df['usia_kategori_encoded'].iloc[0]])[0]
+        df['usia_kategori_encoded'] = encoders['usia_kategori_encoder'].transform([df['usia_kategori_encoded'].iloc[0]])[0]
         
-        # Select features sesuai dengan model training
-        X = df[feature_names]
+        # Select features sesuai dengan model training (Verified from model.feature_names_in_)
+        # model expects: ['hb_level' 'kategori_hb_encoded' 'health_score' 'penyakit_Jantung' 'riwayat_penyakit_encoded' 'penyakit_Tidak' 'frekuensi_donor' 'penyakit_Hipertensi' 'jarak_ke_rs_km' 'berat_badan']
+        correct_features = ['hb_level', 'kategori_hb_encoded', 'health_score', 'penyakit_Jantung', 
+                           'riwayat_penyakit_encoded', 'penyakit_Tidak', 'frekuensi_donor', 
+                           'penyakit_Hipertensi', 'jarak_ke_rs_km', 'berat_badan']
+        
+        # Ensure all columns exist (fill 0 if missing from one-hot)
+        for col in correct_features:
+            if col not in df.columns:
+                df[col] = 0
+                
+        X = df[correct_features]
         
         # Predict
         prediction = model.predict(X)[0]

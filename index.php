@@ -176,7 +176,7 @@
             gap: 10px;
             margin-top: 8px;
         }
-        
+            
         .radius-slider {
             flex: 1;
             height: 6px;
@@ -476,9 +476,9 @@
             <div class="recommendation-section">
                 <h2 class="section-title">Donor yang Direkomendasikan</h2>
                 
-                <div class="error-message" id="errorMessage">
+                <div class="error-message" id="errorMessage" style="display: none;">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <div>
+                    <div id="errorText">
                         <strong>Gagal mengambil data.</strong> Pastikan backend berjalan di port 8000.
                     </div>
                 </div>
@@ -489,15 +489,15 @@
                 
                 <div class="stats-container">
                     <div class="stat-item">
-                        <div class="stat-value" id="avgScore">4.8</div>
+                        <div class="stat-value" id="avgScore">-</div>
                         <div class="stat-label">Rata-rata Skor</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="avgDistance">3.2 km</div>
+                        <div class="stat-value" id="avgDistance">-</div>
                         <div class="stat-label">Km Rata-rata</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="eligibleDonors">5</div>
+                        <div class="stat-value" id="eligibleDonors">-</div>
                         <div class="stat-label">Donor Layak</div>
                     </div>
                 </div>
@@ -505,92 +505,54 @@
         </div>
     </div>
 
-    <!-- <script>
-        // Data donor contoh untuk simulasi
-        const sampleDonors = [
-            {
-                name: "Andi Wijaya",
-                bloodType: "O+",
-                age: 28,
-                distance: "2.1 km",
-                lastDonation: "3 bulan lalu",
-                score: 4.9
-            },
-            {
-                name: "Sari Dewi",
-                bloodType: "O+",
-                age: 32,
-                distance: "3.5 km",
-                lastDonation: "5 bulan lalu",
-                score: 4.7
-            },
-            {
-                name: "Budi Santoso",
-                bloodType: "O+",
-                age: 35,
-                distance: "1.8 km",
-                lastDonation: "2 bulan lalu",
-                score: 4.8
-            },
-            {
-                name: "Rina Melati",
-                bloodType: "O+",
-                age: 25,
-                distance: "4.2 km",
-                lastDonation: "6 bulan lalu",
-                score: 4.5
-            },
-            {
-                name: "Dian Prasetyo",
-                bloodType: "O+",
-                age: 30,
-                distance: "2.9 km",
-                lastDonation: "4 bulan lalu",
-                score: 4.6
-            }
-        ]; -->
-        
-        // Fungsi untuk menampilkan data donor
-        function displayDonors() {
-            const donorList = document.getElementById('donorList');
-            donorList.innerHTML = '';
+    <script>
+        // Fungsi untuk menampilkan pesan error
+        function showErrorMessage(message) {
+            const errorElement = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.innerHTML = `<strong>Terjadi Kesalahan.</strong> ${message}`;
+            errorElement.style.display = 'flex';
             
-            sampleDonors.forEach(donor => {
-                const donorElement = document.createElement('div');
-                donorElement.className = 'donor-item';
-                donorElement.innerHTML = `
-                    <div class="donor-header">
-                        <div class="donor-name">${donor.name}</div>
-                        <div class="donor-blood">${donor.bloodType}</div>
-                    </div>
-                    <div class="donor-details">
-                        <div class="detail-item">
-                            <i class="fas fa-user"></i>
-                            <span>${donor.age} tahun</span>
-                        </div>
-                        <div class="detail-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>${donor.distance} dari RS</span>
-                        </div>
-                        <div class="detail-item">
-                            <i class="fas fa-tint"></i>
-                            <span>Donor terakhir: ${donor.lastDonation}</span>
-                        </div>
-                        <div class="detail-item">
-                            <i class="fas fa-star"></i>
-                            <span>Skor: ${donor.score}</span>
-                        </div>
-                    </div>
-                `;
-                donorList.appendChild(donorElement);
-            });
+            // Sembunyikan daftar donor jika error
+            document.getElementById('donorList').innerHTML = '';
         }
-        
+
+        function showSuccessMessage(count) {
+             // Optional: Bisa tambahkan toast atau alert simple
+             // Saat ini cukup dengan update UI di daftar donor
+        }
+
         // Fungsi untuk menyembunyikan pesan error
         function hideError() {
             document.getElementById('errorMessage').style.display = 'none';
         }
-        
+
+        // Fungsi untuk update statistik
+        function updateStatistics(donors) {
+            const avgScoreEl = document.getElementById('avgScore');
+            const avgDistanceEl = document.getElementById('avgDistance');
+            const eligibleDonorsEl = document.getElementById('eligibleDonors');
+
+            if (!donors || donors.length === 0) {
+                avgScoreEl.textContent = '-';
+                avgDistanceEl.textContent = '-';
+                eligibleDonorsEl.textContent = '0';
+                return;
+            }
+
+            // Hitung rata-rata score
+            const totalScore = donors.reduce((sum, donor) => sum + parseFloat(donor.score), 0);
+            const avgScore = (totalScore / donors.length).toFixed(1);
+
+            // Hitung rata-rata jarak
+            const totalDist = donors.reduce((sum, donor) => sum + parseFloat(donor.distance), 0);
+            const avgDist = (totalDist / donors.length).toFixed(1);
+
+            avgScoreEl.textContent = avgScore;
+            avgDistanceEl.textContent = avgDist + ' km';
+            eligibleDonorsEl.textContent = donors.length;
+        }
+
         // Fungsi untuk mengatur pilihan radio (rhesus dan urgensi)
         function setupRadioButtons() {
             const radioOptions = document.querySelectorAll('.radio-option');
@@ -615,7 +577,7 @@
                 });
             });
         }
-        
+
         // Fungsi untuk mengatur slider radius
         function setupRadiusSlider() {
             const sliderThumb = document.querySelector('.slider-thumb');
@@ -673,7 +635,7 @@
             const initialX = sliderRect.width * initialPercent;
             updateSliderPosition(initialX);
         }
-        
+
         // Fungsi untuk mengumpulkan data form
         function getFormData() {
             return {
@@ -685,7 +647,7 @@
                 searchRadius: document.getElementById('searchRadius').value
             };
         }
-        
+
         // Fungsi untuk menampilkan data form yang dikirim
         function showFormData(formData) {
             const donorList = document.getElementById('donorList');
@@ -721,108 +683,114 @@
             `;
             donorList.prepend(formInfo);
         }
-        
-        // Event listener untuk form submission
-        // Update bagian form submission
-document.getElementById('bloodRequestForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    // Sembunyikan pesan error
-    hideError();
-    
-    // Dapatkan data form
-    const formData = getFormData();
-    
-    // Tampilkan loading
-    const searchButton = document.getElementById('searchButton');
-    const originalText = searchButton.innerHTML;
-    searchButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
-    searchButton.disabled = true;
-    
-    try {
-        // Kirim request ke backend
-        const response = await fetch('api/request_blood.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            // Tampilkan data form
-            showFormData(formData);
-            
-            // Tampilkan rekomendasi
-            displayRecommendations(result.recommendations);
-            
-            // Update statistik
-            updateStatistics(result.recommendations);
-            
-            // Tampilkan pesan sukses
-            showSuccessMessage(result.recommendations.length);
-        } else {
-            showErrorMessage(result.message);
-        }
-        
-    } catch (error) {
-        console.error('Error:', error);
-        showErrorMessage('Terjadi kesalahan pada server');
-    } finally {
-        // Restore button
-        searchButton.innerHTML = originalText;
-        searchButton.disabled = false;
-    }
-});
 
-// Fungsi untuk menampilkan rekomendasi
-function displayRecommendations(recommendations) {
-    const donorList = document.getElementById('donorList');
-    donorList.innerHTML = '';
-    
-    recommendations.forEach(donor => {
-        const donorElement = document.createElement('div');
-        donorElement.className = 'donor-item';
-        donorElement.innerHTML = `
-            <div class="donor-header">
-                <div class="donor-name">${donor.name}</div>
-                <div class="donor-blood">${donor.blood_type}</div>
-            </div>
-            <div class="donor-details">
-                <div class="detail-item">
-                    <i class="fas fa-user"></i>
-                    <span>${donor.age} tahun</span>
+        // Fungsi untuk menampilkan rekomendasi
+        function displayRecommendations(recommendations) {
+            const donorList = document.getElementById('donorList');
+            donorList.innerHTML = '';
+            
+            recommendations.forEach(donor => {
+                const donorElement = document.createElement('div');
+                donorElement.className = 'donor-item';
+                donorElement.innerHTML = `
+                    <div class="donor-header">
+                        <div class="donor-name">${donor.name}</div>
+                        <div class="donor-blood">${donor.blood_type}</div>
+                    </div>
+                    <div class="donor-details">
+                        <div class="detail-item">
+                            <i class="fas fa-user"></i>
+                            <span>${donor.age} tahun</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${donor.distance}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-tint"></i>
+                            <span>Donor terakhir: ${donor.last_donation}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-star"></i>
+                            <span>Skor: ${donor.score}/5.0</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-phone"></i>
+                            <span>${donor.contact}</span>
+                        </div>
+                    </div>
+                `;
+                donorList.appendChild(donorElement);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupRadiusSlider();
+            setupRadioButtons();
+            
+            // Tampilkan state kosong awal
+            const donorList = document.getElementById('donorList');
+            donorList.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #888;">
+                    <i class="fas fa-search" style="font-size: 48px; margin-bottom: 15px; opacity: 0.3;"></i>
+                    <p>Silakan isi form dan klik "Cari Donor Terdekat" untuk melihat hasil.</p>
                 </div>
-                <div class="detail-item">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <span>${donor.distance}</span>
-                </div>
-                <div class="detail-item">
-                    <i class="fas fa-tint"></i>
-                    <span>Donor terakhir: ${donor.last_donation}</span>
-                </div>
-                <div class="detail-item">
-                    <i class="fas fa-star"></i>
-                    <span>Skor: ${donor.score}/5.0</span>
-                </div>
-                <div class="detail-item">
-                    <i class="fas fa-phone"></i>
-                    <span>${donor.contact}</span>
-                </div>
-            </div>
-        `;
-        donorList.appendChild(donorElement);
-    });
-}
+            `;
+
+            // Setup form listener
+            document.getElementById('bloodRequestForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Sembunyikan pesan error
+                hideError();
+                
+                // Dapatkan data form
+                const formData = getFormData();
+                
+                // Tampilkan loading
+                const searchButton = document.getElementById('searchButton');
+                const originalText = searchButton.innerHTML;
+                searchButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+                searchButton.disabled = true;
+                
+                try {
+                    // Kirim request ke backend
+                    const response = await fetch('api/request_blood.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Tampilkan data form
+                        showFormData(formData);
+                        
+                        // Tampilkan rekomendasi
+                        displayRecommendations(result.recommendations);
+                        
+                        // Update statistik
+                        updateStatistics(result.recommendations);
+                        
+                        // Tampilkan pesan sukses
+                        showSuccessMessage(result.recommendations.length);
+                    } else {
+                        showErrorMessage(result.message);
+                    }
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    showErrorMessage('Terjadi kesalahan pada server');
+                } finally {
+                    // Restore button
+                    searchButton.innerHTML = originalText;
+                    searchButton.disabled = false;
+                }
+            });
+        });
     </script>
-    <script>
-document.addEventListener('DOMContentLoaded', () => {
-    setupRadiusSlider();
-    setupRadioButtons();
-    displayDonors(); // kalau mau auto tampil
-});
-</script>
 </body>
 </html>

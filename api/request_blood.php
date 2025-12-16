@@ -61,12 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 function find_matching_donors($conn, $blood_type_request, $radius) {
-    // Determine base blood group (e.g., 'A+' -> 'A')
-    $blood_group_base = preg_replace('/[+-]$/', '', $blood_type_request);
+    // Gunakan exact match (A- cari A-)
+    // User request: "blood Tipe A- maka yang di recomendasikan semua data donor yang A- juga"
     
-    // Query untuk mencari donor yang sesuai
-    // Karena tabel donors tidak menyimpan rhesus (hanya A, B, AB, O), kita cocokan base groupnya.
-    // Dan menggunakan kolom jarak_ke_rs_km yang diinput user.
     $query = "
         SELECT *
         FROM donors
@@ -79,7 +76,7 @@ function find_matching_donors($conn, $blood_type_request, $radius) {
     ";
     
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("sd", $blood_group_base, $radius);
+    $stmt->bind_param("sd", $blood_type_request, $radius);
     $stmt->execute();
     
     $result = $stmt->get_result();
