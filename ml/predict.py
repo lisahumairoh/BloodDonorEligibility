@@ -5,13 +5,18 @@ import numpy as np
 import sys
 import json
 
-# Load model dan encoders
-model = joblib.load('blood_donor_model.pkl')
+import os
 
-with open('encoders_final.pkl', 'rb') as f:
+# Load model dan encoders
+# Gunakan absolute path agar bisa dipanggil dari folder manapun (misal dari API PHP)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+model = joblib.load(os.path.join(current_dir, 'blood_donor_model.pkl'))
+
+with open(os.path.join(current_dir, 'encoders_final.pkl'), 'rb') as f:
     encoders = pickle.load(f)
 
-with open('feature_names.pkl', 'rb') as f:
+with open(os.path.join(current_dir, 'feature_names.pkl'), 'rb') as f:
     feature_names = pickle.load(f)
 
 def predict_donor_eligibility(donor_data):

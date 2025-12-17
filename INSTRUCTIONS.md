@@ -149,3 +149,30 @@ Ringkasan Cara Kerjanya: AI ini telah dilatih (.pkl file) dengan data historis. 
 
 Contoh: Seseorang berat 50kg (batas bawah) tapi HB-nya sangat bagus (16) dan masih muda, mungkin diprediksi LAYAK karena skor kesehatannya tinggi.
 Sedangkan yang berat 80kg tapi HB rendah dan punya riwayat hipertensi akan diprediksi TIDAK LAYAK.
+
+## 5. Interpretasi Skor & Logika Pengukuran
+
+Sistem ini menampilkan dua jenis angka yang berbeda konteksnya. Berikut cara membacanya:
+
+### A. Skor Kelayakan Donor (0% - 100%)
+Muncul pada saat **Pendaftaran Donor** (`input_donor.php`).
+- **Makna**: Seberapa yakin AI bahwa donor ini sehat dan memenuhi syarat medis.
+- **Sumber**: Output `predict_proba()` dari model Machine Learning (Random Forest).
+- **Interpretasi Nilai**:
+  - `> 50%`: Diprediksi **LAYAK**. Semakin tinggi (mendekati 100%), semakin ideal kondisi fisiknya (HB optimal, usia produktif, dll).
+  - `< 50%`: Diprediksi **TIDAK LAYAK**. Semakin rendah (mendekati 0%), semakin berisiko (misal punya penyakit berat atau HB anjlok).
+  - *Catatan: Jika nilai 10% muncul terus menerus untuk kondisi tidak layak, itu adalah tanda Fallback Manual aktif.*
+
+### B. Match Score (1.0 - 5.0)
+Muncul pada saat **Pencarian / Rekomendasi** (`index.php`).
+- **Makna**: Seberapa "cocok" donor tersebut untuk kebutuhan spesifik saat ini.
+- **Sumber**: Perhitungan heuristik di PHP (`api/request_blood.php`).
+- **Komponen Penilaian**:
+  | Komponen | Bobot Skor |
+  |----------|------------|
+  | **Base Score** | 4.0 (Modal awal jika layak) |
+  | **Jarak Lokasi** | +0.5 (Sangat Dekat <2km), +0.3 (<5km), +0.1 (<10km) |
+  | **Kesehatan** | +0.3 (HB Prima), +0.2 (Berat Ideal >65kg) |
+  | **Track Record** | +0.2 (Donor >10x) |
+  | **Penalty** | -0.2 (Donor Pasif/Jarang) |
+- **Nilai Maksimal**: 5.0 (Sempurna - Dekat, Sehat, Veteran).
