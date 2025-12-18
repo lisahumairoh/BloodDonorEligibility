@@ -3,7 +3,7 @@
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', 'blood_donation');
+define('DB_NAME', 'blood_donor_db');
 
 // Konfigurasi Python
 define('PYTHON_PATH', 'python');

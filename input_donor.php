@@ -71,6 +71,117 @@
             .main-content { flex-direction: column; }
             .request-section { border-right: none; border-bottom: 1px solid #eee; }
         }
+
+        /* Tambahan CSS untuk bagian kontak */
+    .contact-card {
+    background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+    border-left: 4px solid #2e7d32;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 15px 0;
+    box-shadow: 0 3px 10px rgba(46, 125, 50, 0.1);
+}
+
+    .contact-header {
+    font-weight: 700;
+    color: #2e7d32;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+}
+
+    .contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+    .contact-item {
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #c8e6c9;
+}
+
+    .contact-label {
+    font-weight: 600;
+    color: #555;
+    font-size: 13px;
+    margin-bottom: 5px;
+    display: block;
+}
+
+    .contact-value {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+    .action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+    .btn-whatsapp {
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    flex: 1;
+    transition: background 0.3s;
+}
+
+    .btn-whatsapp:hover {
+    background: #1da851;
+}
+
+    .btn-map {
+    background: #4285F4;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    flex: 1;
+    transition: background 0.3s;
+}
+
+    .btn-map:hover {
+    background: #3367d6;
+}
+
+    .btn-copy {
+    background: #757575;
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    margin-left: auto;
+    transition: background 0.3s;
+}
+
+    .btn-copy:hover {
+    background: #616161;
+}
     </style>
 </head>
 <body>
@@ -325,42 +436,144 @@
                 
                 const result = await response.json();
                 
-                // Tampilkan Hasil
-                if (result.success) {
-                    const isEligible = result.status_layak;
-                    const probability = (result.prediction_probability * 100).toFixed(1);
-                    
-                    let resultHTML = `
-                        <div class="result-card active ${isEligible ? 'success' : 'warning'}">
-                            <div class="result-header" style="color: ${isEligible ? '#2e7d32' : '#f57f17'}">
-                                <i class="fas ${isEligible ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-                                ${isEligible ? 'ANDA LAYAK DONOR' : 'KURANG DISARANKAN'}
+               // Tampilkan Hasil
+if (result.success) {
+    const isEligible = result.status_layak;
+    const probability = (result.prediction_probability * 100).toFixed(1);
+    
+    // Data kontak dari form yang sudah diisi user
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const phone = document.getElementById('contact_number').value;
+    const city = document.getElementById('city').value;
+    const distance = document.getElementById('jarak_ke_rs_km').value;
+    
+    let resultHTML = `
+        <div class="result-card active ${isEligible ? 'success' : 'warning'}">
+            <div class="result-header" style="color: ${isEligible ? '#2e7d32' : '#f57f17'}">
+                <i class="fas ${isEligible ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                ${isEligible ? 'ANDA LAYAK DONOR' : 'KURANG DISARANKAN'}
+            </div>
+            
+            <div class="result-detail">
+                <strong>ID Pendaftaran:</strong> ${result.donor_id}
+            </div>
+            <div class="result-detail">
+                <strong>Skor Kelayakan:</strong> 
+                <div style="background: #eee; height: 10px; border-radius: 5px; margin-top: 5px; overflow: hidden;">
+                    <div style="width: ${probability}%; background: ${isEligible ? '#4caf50' : '#ff9800'}; height: 100%;"></div>
+                </div>
+                <div style="text-align: right; font-size: 12px; margin-top: 3px;">${probability}% Match</div>
+            </div>
+    `;
+    
+    // HANYA tampilkan kontak dan alamat jika LAYAK
+    if (isEligible) {
+        resultHTML += `
+            <hr style="margin: 15px 0; border: 0; border-top: 1px dashed #ccc;">
+            
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 10px;">
+                <div style="font-weight: 700; color: #2e7d32; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-user-check"></i> DATA KONTAK & LOKASI
+                </div>
+                
+                <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                    <!-- Kolom 1: Data Pribadi -->
+                    <div style="flex: 1; min-width: 200px;">
+                        <div style="margin-bottom: 8px;">
+                            <div style="font-weight: 600; color: #555; font-size: 13px;">Nama Lengkap</div>
+                            <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                                <i class="fas fa-user" style="color: #c62828; width: 16px;"></i>
+                                ${name}
                             </div>
-                            
-                            <div class="result-detail">
-                                <strong>ID Pendaftaran:</strong> ${result.donor_id}
-                            </div>
-                            <div class="result-detail">
-                                <strong>Skor Kelayakan:</strong> 
-                                <div style="background: #eee; height: 10px; border-radius: 5px; margin-top: 5px; overflow: hidden;">
-                                    <div style="width: ${probability}%; background: ${isEligible ? '#4caf50' : '#ff9800'}; height: 100%;"></div>
-                                </div>
-                                <div style="text-align: right; font-size: 12px; margin-top: 3px;">${probability}% Match</div>
-                            </div>
-                            
-                            <hr style="margin: 15px 0; border: 0; border-top: 1px dashed #ccc;">
-                            
-                            ${result.warning ? `
-                                <div style="background: rgba(255, 255, 255, 0.6); padding: 10px; border-radius: 5px;">
-                                    <strong style="color: #c62828;">Catatan Medis:</strong><br>
-                                    ${result.warning}
-                                    ${result.suggestion ? `<ul style="margin-left: 20px; margin-top: 5px; font-size: 14px;">${result.suggestion.map(s => `<li>${s}</li>`).join('')}</ul>` : ''}
-                                </div>
-                            ` : `<p style="color: #2e7d32; font-size: 14px;">Selamat! Data medis Anda menunjukkan bahwa Anda dalam kondisi prima untuk melakukan donor darah.</p>`}
                         </div>
-                    `;
+                        
+                        <div style="margin-bottom: 8px;">
+                            <div style="font-weight: 600; color: #555; font-size: 13px;">Email</div>
+                            <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                                <i class="fas fa-envelope" style="color: #c62828; width: 16px;"></i>
+                                ${email}
+                            </div>
+                        </div>
+                    </div>
                     
-                    resultContainer.innerHTML = resultHTML;
+                    <!-- Kolom 2: Kontak & Lokasi -->
+                    <div style="flex: 1; min-width: 200px;">
+                        <div style="margin-bottom: 8px;">
+                            <div style="font-weight: 600; color: #555; font-size: 13px;">Telepon/WhatsApp</div>
+                            <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                                <i class="fas fa-phone" style="color: #c62828; width: 16px;"></i>
+                                ${phone}
+                                <button onclick="copyToClipboard('${phone}')" style="margin-left: auto; background: #2e7d32; color: white; border: none; padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                    Salin
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 8px;">
+                            <div style="font-weight: 600; color: #555; font-size: 13px;">Lokasi</div>
+                            <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                                <i class="fas fa-map-marker-alt" style="color: #c62828; width: 16px;"></i>
+                                ${city}
+                                <span style="margin-left: auto; font-size: 12px; color: #666;">
+                                    ${distance} km dari RS terdekat
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tombol Aksi -->
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button onclick="sendWhatsApp('${phone}')" style="flex: 1; background: #25D366; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+                        <i class="fab fa-whatsapp"></i> Hubungi via WhatsApp
+                    </button>
+                    <button onclick="showMap('${city}')" style="flex: 1; background: #4285F4; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+                        <i class="fas fa-map"></i> Lihat Peta Lokasi
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Tambahkan bagian warning/note (jika ada)
+    resultHTML += `
+        ${result.warning ? `
+            <div style="background: rgba(255, 255, 255, 0.6); padding: 10px; border-radius: 5px; margin-top: 15px;">
+                <strong style="color: #c62828;">Catatan Medis:</strong><br>
+                ${result.warning}
+                ${result.suggestion ? `<ul style="margin-left: 20px; margin-top: 5px; font-size: 14px;">${result.suggestion.map(s => `<li>${s}</li>`).join('')}</ul>` : ''}
+            </div>
+        ` : isEligible ? `<p style="color: #2e7d32; font-size: 14px; margin-top: 15px;">Selamat! Data medis Anda menunjukkan bahwa Anda dalam kondisi prima untuk melakukan donor darah.</p>` : ''}
+        
+        </div>
+    `;
+    
+    resultContainer.innerHTML = resultHTML;
+    
+    // Tambahkan fungsi helper jika belum ada
+    if (!window.copyToClipboard) {
+        window.copyToClipboard = function(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Nomor berhasil disalin: ' + text);
+            });
+        }
+    }
+    
+    if (!window.sendWhatsApp) {
+        window.sendWhatsApp = function(phone) {
+            const cleanPhone = phone.replace(/\D/g, '');
+            window.open(`https://wa.me/${cleanPhone}`, '_blank');
+        }
+    }
+    
+    if (!window.showMap) {
+        window.showMap = function(city) {
+            window.open(`https://www.google.com/maps/search/rumah+sakit+donor+darah+${encodeURIComponent(city)}`, '_blank');
+        }
+    }
+}
+
                 } else {
                      resultContainer.innerHTML = `
                         <div class="result-card active error">
