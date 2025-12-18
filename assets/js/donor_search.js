@@ -125,18 +125,45 @@ async function loadMoreDonors() {
     if (isLoading || !currentRequestId) return;
 
     const loadMoreBtn = document.getElementById('loadMoreBtn');
-    loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat...';
-    loadMoreBtn.disabled = true;
-    loadMoreBtn.parentElement.style.display = 'block';
+    if (loadMoreBtn) {
+        loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat...';
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.parentElement.style.display = 'block';
+    }
+
     isLoading = true;
+
+    // Safety Timeout: If loading takes > 8 seconds, force stop and show error
+    const safetyTimeout = setTimeout(() => {
+        if (isLoading) {
+            console.error("Loading timeout.");
+            isLoading = false;
+            const donorList = document.getElementById('donorList');
+            if (donorList && donorList.innerHTML.includes('fa-spin')) {
+                donorList.innerHTML = `
+                    <div class="empty-state" style="border-color: #ffe0b2; background-color: #fff3e0; color: #e65100;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 15px;"></i>
+                        <p>Waktu Habis.</p>
+                        <small>Memuat data terlalu lama. Silakan coba lagi.</small>
+                    </div>
+                `;
+            }
+            if (loadMoreBtn) loadMoreBtn.innerHTML = 'Coba Lagi';
+        }
+    }, 8000);
 
     try {
         currentPage++;
-        // NOTE: Path needs to be correct relative to where this script is called. 
-        // If called from views/search_results.php, API is at ../api/
+        console.log(`Fetching page ${currentPage} for request ${currentRequestId}`);
+
+        // NOTE: Path needs to be correct relative to where this script is called.
         const response = await fetch(`../api/get_recommendations.php?request_id=${currentRequestId}&page=${currentPage}`);
 
         let text = await response.text();
+
+        // Remove processing timeout
+        clearTimeout(safetyTimeout);
+
         let result;
 
         try {
@@ -154,23 +181,22 @@ async function loadMoreDonors() {
                 displayRecommendations(result.recommendations, shouldAppend);
 
                 // Update button visibility
-                if (!result.has_more) { // API currently doesn't return has_more, logic might hide button prematurely if not handled
-                    // If API doesn't support pagination yet, we might want to just hide it after first load
-                    // But if page > 1 and we got results, keep showing? 
-                    // For now, if < 10 results, assume end
-                    if (result.recommendations.length < 10) {
+                if (loadMoreBtn) {
+                    if (!result.has_more && result.recommendations.length < 10) {
                         loadMoreBtn.parentElement.style.display = 'none';
                     } else {
                         loadMoreBtn.innerHTML = 'Muat Lebih Banyak';
                         loadMoreBtn.disabled = false;
                     }
-                } else {
-                    loadMoreBtn.innerHTML = 'Muat Lebih Banyak';
-                    loadMoreBtn.disabled = false;
                 }
             } else {
+                // If NO recommendations found at all
                 if (currentPage === 1) {
+                    console.log("No donors found on first page.");
                     const donorList = document.getElementById('donorList');
+                    // Explicitly clear spinner
+                    donorList.innerHTML = '';
+
                     donorList.innerHTML = `
                         <div class="empty-state">
                             <i class="fas fa-search" style="font-size: 48px; margin-bottom: 15px; opacity: 0.3;"></i>
@@ -179,12 +205,13 @@ async function loadMoreDonors() {
                         </div>
                     `;
                 }
-                loadMoreBtn.parentElement.style.display = 'none';
+                if (loadMoreBtn) loadMoreBtn.parentElement.style.display = 'none';
             }
         } else {
             throw new Error(result.message || 'Gagal memuat data');
         }
     } catch (error) {
+        clearTimeout(safetyTimeout); // Ensure timeout cleared on error too
         console.error('Error loading more:', error);
 
         const donorList = document.getElementById('donorList');
@@ -198,10 +225,12 @@ async function loadMoreDonors() {
                     <button onclick="location.reload()" style="margin-top: 15px; padding: 8px 15px; border: 1px solid #c62828; color: #c62828; background: white; border-radius: 5px; cursor: pointer;">Coba Lagi</button>
                 </div>
             `;
-            loadMoreBtn.parentElement.style.display = 'none';
+            if (loadMoreBtn) loadMoreBtn.parentElement.style.display = 'none';
         } else {
-            loadMoreBtn.innerHTML = 'Gagal';
-            alert('Gagal: ' + error.message);
+            if (loadMoreBtn) {
+                loadMoreBtn.innerHTML = 'Gagal';
+                alert('Gagal: ' + error.message);
+            }
         }
     } finally {
         isLoading = false;

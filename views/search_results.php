@@ -206,12 +206,8 @@ require_once '../layouts/header.php';
         </div>
     </div>
     
-    <div id="loadMoreContainer" class="load-more-container" style="display: none;">
-        <button id="loadMoreBtn" class="load-more-btn">
-            Muat Lebih Banyak
-        </button>
-    </div>
-    
+
+     
     <div id="errorMessage" style="display: none; background-color: #ffebee; color: #c62828; padding: 15px; border-radius: 8px; margin-top: 20px; align-items: center;">
         <i class="fas fa-exclamation-circle" style="margin-right: 10px; font-size: 20px;"></i>
         <div id="errorText"></div>
