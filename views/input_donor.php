@@ -237,21 +237,21 @@ require_once '../layouts/header.php';
                 <div class="form-col">
                     <div class="input-group">
                         <label class="required" for="usia">Usia (Tahun)</label>
-                        <input type="number" id="usia" class="input-field" min="17" max="65" value="25" required>
-                        <small style="color: #666; font-size: 12px;">Min: 17 tahun</small>
+                        <input type="number" id="usia" class="input-field" placeholder="17" required>
+                        <small style="color: #666; font-size: 12px;">17 - 60 tahun</small>
                     </div>
                 </div>
                 <div class="form-col">
                     <div class="input-group">
                         <label class="required" for="berat_badan">Berat Badan (kg)</label>
-                        <input type="number" id="berat_badan" class="input-field" min="45" value="60" required>
+                        <input type="number" id="berat_badan" class="input-field" placeholder="60" required>
                         <small style="color: #666; font-size: 12px;">Min: 45 kg</small>
                     </div>
                 </div>
                 <div class="form-col">
                     <div class="input-group">
                         <label class="required" for="hb_level">HB Level (g/dL)</label>
-                        <input type="number" id="hb_level" class="input-field" min="11" max="18" step="0.1" value="13.5" required>
+                        <input type="number" id="hb_level" class="input-field" step="0.1" placeholder="13.5" required>
                         <small style="color: #666; font-size: 12px;">Normal: 12.5 - 17.0</small>
                     </div>
                 </div>
@@ -278,8 +278,9 @@ require_once '../layouts/header.php';
                 </div>
                 <div class="form-col">
                         <div class="input-group">
-                        <label for="months_since_first_donation">Terakhir Donor (Bulan lalu)</label>
+                        <label for="months_since_first_donation">Terakhir Donor (bulan)</label>
                         <input type="number" id="months_since_first_donation" class="input-field" min="0" value="0">
+                        <small style="color: #666; font-size: 12px;">Min: 2 bulan</small>
                         </div>
                 </div>
             </div>
@@ -395,43 +396,77 @@ require_once '../layouts/header.php';
             
             // Tampilkan Hasil
             if (result.success) {
-                const isEligible = result.status_layak;
-                const probability = (result.prediction_probability * 100).toFixed(1);
+                const status = parseInt(result.status_layak);
                 
-                let resultHTML = `
-                    <div class="result-card active ${isEligible ? 'success' : 'warning'}">
-                        <div class="result-header" style="color: ${isEligible ? '#2e7d32' : '#f57f17'}">
-                            <i class="fas ${isEligible ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-                            ${isEligible ? 'ANDA LAYAK DONOR' : 'KURANG DISARANKAN'}
+                let resultHTML = '';
+                
+                if (status === 1) {
+                    // LAYAK (Green)
+                    resultHTML = `
+                        <div class="result-card active eligible">
+                            <div class="result-header" style="color: #2e7d32;">
+                                <i class="fas fa-check-circle"></i> ANDA LAYAK DONOR
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <p style="color: #2e7d32; font-size: 15px; font-weight: 500; margin-bottom: 10px;">
+                                    <i class="fas fa-smile-beam"></i> Selamat! Data medis Anda menunjukkan bahwa Anda dalam kondisi prima untuk melakukan donor darah.
+                                </p>
+                            </div>
+                            
+                            <div style="background-color: #f0f7ff; border-radius: 8px; padding: 15px; border-left: 4px solid #2e7d32; font-size: 13.5px; color: #444;">
+                                <strong style="display:block; margin-bottom:8px; color:#2e7d32;">ℹ️ Catatan Penting:</strong>
+                                <ul style="padding-left: 15px; margin: 0; line-height: 1.5;">
+                                    <li style="margin-bottom: 5px;">Hasil di atas merupakan prediksi awal berdasarkan data yang Anda masukkan.</li>
+                                    <li style="margin-bottom: 5px;">Kelayakan donor sesungguhnya akan diputuskan oleh Dokter/Petugas Medis melalui pemeriksaan fisik di UTD/RS.</li>
+                                    <li style="margin-bottom: 5px;">Pastikan Anda dalam kondisi prima (tidur minimal 5 jam dan sudah makan) sebelum mendonor.</li>
+                                    <li>Harap membawa identitas diri (KTP, SIM, Paspor).</li>
+                                </ul>
+                            </div>
                         </div>
-                        
-                        <hr style="margin: 15px 0; border: 0; border-top: 1px dashed #ccc;">
-                        
-                        ${result.warning ? `
+                    `;
+                } else if (status === 2) {
+                    // DITANGGUHKAN (Yellow)
+                    resultHTML = `
+                        <div class="result-card active" style="border-left: 5px solid #ff9800; background: #fff3e0;">
+                            <div class="result-header" style="color: #ef6c00;">
+                                <i class="fas fa-exclamation-triangle"></i> DITANGGUHKAN
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <p style="color: #ef6c00; font-size: 15px; font-weight: 500;">
+                                    Mohon maaf, Anda belum bisa donor saat ini tapi bisa mencoba lagi nanti.
+                                </p>
+                            </div>
+                            
                             <div style="background: rgba(255, 255, 255, 0.6); padding: 10px; border-radius: 5px;">
-                                <strong style="color: #c62828;">Alasan Medis:</strong><br>
-                                ${result.warning}
+                                <strong style="color: #d84315;">Alasan Penangguhan:</strong><br>
+                                ${result.warning || 'Kondisi kesehatan perlu perbaikan sedikit.'}
                                 ${result.suggestion ? `<ul style="margin-left: 20px; margin-top: 5px; font-size: 14px;">${result.suggestion.map(s => `<li>${s}</li>`).join('')}</ul>` : ''}
                             </div>
-                        ` : `
-                        <div style="margin-bottom: 15px;">
-                            <p style="color: #2e7d32; font-size: 15px; font-weight: 500; margin-bottom: 10px;">
-                                Selamat! Data medis Anda menunjukkan bahwa Anda dalam kondisi prima untuk melakukan donor darah.
-                            </p>
+                            
+                            <div style="margin-top: 15px; font-size: 13px; color: #555;">
+                                <i class="fas fa-info-circle"></i> Silakan perbaiki nutrisi (zat besi/vitamin) dan kembali setelah kondisi membaik.
+                            </div>
                         </div>
-                        
-                        <div style="background-color: #f0f7ff; border-radius: 8px; padding: 15px; border-left: 4px solid #f0f7ff; font-size: 13.5px; color: #444;">
-                            <strong style="display:block; margin-bottom:8px; color:#1976d2;">Catatan Penting:</strong>
-                            <ul style="padding-left: 15px; margin: 0; line-height: 1.5;">
-                                <li style="margin-bottom: 5px;">Hasil di atas merupakan prediksi awal berdasarkan data yang Anda masukkan.</li>
-                                <li style="margin-bottom: 5px;">Kelayakan donor sesungguhnya akan diputuskan oleh Dokter/Petugas Medis melalui pemeriksaan fisik di UTD/RS.</li>
-                                <li style="margin-bottom: 5px;">Pastikan Anda dalam kondisi prima (tidur minimal 5 jam dan sudah makan) sebelum mendonor.</li>
-                                <li>Harap membawa identitas diri (KTP, SIM, Paspor).</li>
-                            </ul>
+                    `;
+                } else {
+                    // TIDAK LAYAK (Red)
+                    resultHTML = `
+                        <div class="result-card active not-eligible">
+                            <div class="result-header" style="color: #c62828;">
+                                <i class="fas fa-times-circle"></i> DI TOLAK
+                            </div>
+                            
+                            <hr style="margin: 15px 0; border: 0; border-top: 1px dashed #ccc;">
+                            
+                            <div style="background: rgba(255, 255, 255, 0.6); padding: 10px; border-radius: 5px;">
+                                <strong style="color: #c62828;">Alasan Medis:</strong><br>
+                                ${result.warning || 'Statistik kesehatan belum memenuhi syarat.'}
+                                ${result.suggestion ? `<ul style="margin-left: 20px; margin-top: 5px; font-size: 14px;">${result.suggestion.map(s => `<li>${s}</li>`).join('')}</ul>` : ''}
+                            </div>
                         </div>
-                        `}
-                    </div>
-                `;
+                    `;
+                }
                 
                 resultContainer.innerHTML = resultHTML;
             } else {

@@ -176,3 +176,15 @@ Muncul pada saat **Pencarian / Rekomendasi** (`index.php`).
   | **Track Record** | +0.2 (Donor >10x) |
   | **Penalty** | -0.2 (Donor Pasif/Jarang) |
 - **Nilai Maksimal**: 5.0 (Sempurna - Dekat, Sehat, Veteran).
+
+---
+
+## 6. Status Kelayakan Detail (Logic 0, 1, 2)
+
+Sistem menggunakan 3 status kelayakan yang ditentukan oleh kombinasi **Strict Rules** (aturan mutlak) dan **Prediksi ML**.
+
+| Status | Kode | Logic / Kriteria | Keterangan untuk User |
+|:---|:---:|:---|:---|
+| **TIDAK LAYAK** | `0` | **Strict Rules:**<br>• Berat Badan < 45 kg<br>• Usia < 17 atau > 60 tahun<br>• Ada Riwayat Penyakit (Hipertensi, Diabetes, Jantung, Hepatitis)<br>• HB < 10.0 (Anemia Berat)<br>• HB > 17.0 (Darah Kental) | **Merah (Ditolak)**<br>User dilarang donor karena alasan medis fatal/mutlak. |
+| **DITANGGUHKAN** | `2` | **Logic:**<br>• HB 10.0 - < 12.5 (Wanita)<br>• HB 10.0 - < 13.5 (Pria)<br>• Interval Donor < 2 bulan (jika bukan donor baru) | **Kuning (Warning)**<br>User sehat tapi kondisi saat ini belum optimal. Disarankan kembali setelah perbaikan nutrisi/waktu. |
+| **LAYAK** | `1` | **Logic:**<br>• Lolos semua Strict Rules (0)<br>• Lolos semua Logic Penangguhan (2)<br>• Probabilitas ML > 50% | **Hijau (Success)**<br>Kondisi prima dan siap donor. |

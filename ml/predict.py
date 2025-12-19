@@ -24,6 +24,55 @@ def predict_donor_eligibility(donor_data):
     Memprediksi kelayakan donor berdasarkan data input
     """
     try:
+        # Strict Rule 1: Berat Badan < 45 kg
+        if int(donor_data.get('berat_badan', 0)) < 45:
+             return {
+                'status_layak': 0,
+                'probability': 0.0,
+                'features_used': ['Berat Badan < 45kg (Strict Rule)']
+            }
+
+        # Strict Rule 2: Usia (17 - 60 tahun) -> Tolak jika < 17 atau > 60
+        usia = int(donor_data.get('usia', 0))
+        if usia < 17 or usia > 60:
+             return {
+                'status_layak': 0,
+                'probability': 0.0,
+                'features_used': [f'Usia {usia} tahun (Rentang valid: 17-60)']
+            }
+
+        # Strict Rule 3: Interval Donor (< 2 bulan) -> Ditangguhkan (Status 2)
+        last_donor_months = int(donor_data.get('months_since_first_donation', 0)) # Using this field as 'months_since_last' based on UI label
+        # Note: UI field id is 'months_since_first_donation' but label says 'Terakhir Donor'. 
+        # Assuming the input represents "Bulan sejak donor terakhir".
+        if last_donor_months < 2 and last_donor_months != 0: # 0 means never donated, which is fine
+             return {
+                'status_layak': 2,
+                'probability': 0.0,
+                'features_used': ['Jarak donor < 2 bulan (Ditangguhkan)']
+            }
+
+        # Strict Rule 4: HB Level (Gender Specific)
+        gender = donor_data.get('gender', 'L')
+        hb = float(donor_data.get('hb_level', 0))
+        
+        # 4a. HB Sangat Rendah (< 10.0) -> Tolak (0)
+        if hb < 10.0:
+            return {'status_layak': 0, 'probability': 0.0, 'features_used': ['HB Sangat Rendah < 10.0 (Anemia Berat)']}
+            
+        # 4b. HB Tinggi (> 17.0) -> Tolak (0)
+        if hb > 17.0:
+            return {'status_layak': 0, 'probability': 0.0, 'features_used': ['HB Tinggi > 17.0 (Darah Kental)']}
+            
+        # 4c. HB Rendah / Ditangguhkan (10.0 - Threshold) -> Status 2
+        # Threshold: Pria 13.5, Wanita 12.5
+        min_hb = 13.5 if gender == 'L' else 12.5
+        if 10.0 <= hb < min_hb:
+             return {
+                'status_layak': 2,
+                'probability': 0.0, 
+                'features_used': [f'HB Rendah {hb} (Butuh {min_hb}) - Ditangguhkan']
+            }
         # Strict Rule: Langsung tolak jika ada penyakit tertentu (Permintaan User)
         restricted_diseases = ['Hipertensi', 'Diabetes', 'Jantung', 'Hepatitis']
         if donor_data.get('riwayat_penyakit') in restricted_diseases:

@@ -57,7 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'berat_badan' => $data['berat_badan'],
         'hb_level' => $data['hb_level'],
         'riwayat_penyakit' => $riwayat_penyakit,
-        'jarak_ke_rs_km' => $jarak_ke_rs_km
+        'riwayat_penyakit' => $riwayat_penyakit,
+        'jarak_ke_rs_km' => $jarak_ke_rs_km,
+        'gender' => $gender
     ];
     
     try {
@@ -102,8 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'prediction_probability' => $prediction['probability'] ?? null
             ];
             
-            // Jika donor tidak layak, berikan alasan
-            if ($status_layak == 0) {
+            // Jika donor tidak layak atau ditangguhkan, berikan alasan
+            if ($status_layak != 1) {
                 $response['warning'] = 'Donor tidak memenuhi kriteria kelayakan berdasarkan analisis ML';
                 $response['suggestion'] = get_eligibility_suggestions($ml_data);
             }
@@ -258,8 +260,8 @@ function check_eligibility_manual($data) {
     // Rule-based checking sebagai fallback
     $layak = 1;
     
-    // Rule 1: Usia (17-65 tahun)
-    if ($data['usia'] < 17 || $data['usia'] > 65) {
+    // Rule 1: Usia (17-60 tahun)
+    if ($data['usia'] < 17 || $data['usia'] > 60) {
         $layak = 0;
     }
     
@@ -299,19 +301,32 @@ function get_eligibility_suggestions($data) {
     
     if ($data['usia'] < 17) {
         $suggestions[] = 'Usia minimal donor adalah 17 tahun';
-    } elseif ($data['usia'] > 65) {
-        $suggestions[] = 'Usia maksimal donor adalah 65 tahun';
+    } elseif ($data['usia'] > 60) {
+        $suggestions[] = 'Usia maksimal donor adalah 60 tahun';
     }
     
     if ($data['berat_badan'] < 45) {
         $suggestions[] = 'Berat badan minimal 45 kg';
     }
     
-    $is_wanita = preg_match('/(mrs|ms|miss|female|woman|perempuan)/i', $data['name']);
+    // Cek Gender: 'P' or 'Perempuan' -> Wanita
+    $gender = isset($data['gender']) ? $data['gender'] : '';
+    $is_wanita = ($gender === 'P' || stripos($gender, 'Perempuan') !== false);
+    
+    // HB Min: Wanita 12.5, Pria 13.5
     $hb_min = $is_wanita ? 12.5 : 13.5;
     
     if ($data['hb_level'] < $hb_min) {
-        $suggestions[] = "Level HB minimal $hb_min g/dL";
+        if ($data['hb_level'] >= 10.0) {
+             $suggestions[] = "Level HB {$data['hb_level']} (Sedikit di bawah normal $hb_min). Butuh boost nutrisi.";
+        } else {
+             $suggestions[] = "Level HB minimal $hb_min g/dL";
+        }
+    }
+    
+    // Interval Check (Assuming months_since_first_donation is used as 'Last Donor Interval')
+    if ($data['months_since_first_donation'] < 2 && $data['months_since_first_donation'] != 0) {
+        $suggestions[] = "Jarak dengan donor terakhir minimal 2 bulan (Saat ini: {$data['months_since_first_donation']} bulan)";
     }
     
     if (in_array($data['riwayat_penyakit'], ['Hepatitis', 'Jantung', 'Diabetes', 'Hipertensi'])) {
@@ -322,7 +337,7 @@ function get_eligibility_suggestions($data) {
         $suggestions[] = 'Donor sedang tidak tersedia';
     }
     
-    return empty($suggestions) ? ['Tidak memenuhi kriteria kelayakan donor darah'] : $suggestions;
+    return empty($suggestions) ? ['Kriteria medis belum terpenuhi sepenuhnya'] : $suggestions;
 }
 
 $db->close();
