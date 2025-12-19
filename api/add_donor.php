@@ -43,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $riwayat_penyakit = isset($data['riwayat_penyakit']) ? $data['riwayat_penyakit'] : 'Tidak';
     $jarak_ke_rs_km = isset($data['jarak_ke_rs_km']) ? $data['jarak_ke_rs_km'] : 10.0;
     $city = isset($data['city']) ? $data['city'] : 'Jakarta';
+    $gender = isset($data['gender']) ? $data['gender'] : 'L'; // Default L if not set
     
     // Siapkan data untuk prediksi ML
     $ml_data = [
@@ -69,11 +70,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             donor_id, name, email, contact_number, city, blood_group, 
             availability, months_since_first_donation, number_of_donation, 
             created_at, usia, berat_badan, hb_level, riwayat_penyakit, 
-            jarak_ke_rs_km, status_layak
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), ?, ?, ?, ?, ?, ?)");
+            jarak_ke_rs_km, status_layak, gender
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), ?, ?, ?, ?, ?, ?, ?)");
         
         $stmt->bind_param(
-            "sssssssiiiddsdi",
+            "sssssssiiiddsdis",
             $donor_id,
             $data['name'],
             $data['email'],
@@ -88,7 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data['hb_level'],
             $riwayat_penyakit,
             $jarak_ke_rs_km,
-            $status_layak
+            $status_layak,
+            $gender
         );
         
         if ($stmt->execute()) {
@@ -312,7 +314,7 @@ function get_eligibility_suggestions($data) {
         $suggestions[] = "Level HB minimal $hb_min g/dL";
     }
     
-    if (in_array($data['riwayat_penyakit'], ['Hepatitis', 'Jantung'])) {
+    if (in_array($data['riwayat_penyakit'], ['Hepatitis', 'Jantung', 'Diabetes', 'Hipertensi'])) {
         $suggestions[] = "Riwayat {$data['riwayat_penyakit']} tidak diperbolehkan untuk donor darah";
     }
     

@@ -24,6 +24,14 @@ def predict_donor_eligibility(donor_data):
     Memprediksi kelayakan donor berdasarkan data input
     """
     try:
+        # Strict Rule: Langsung tolak jika ada penyakit tertentu (Permintaan User)
+        restricted_diseases = ['Hipertensi', 'Diabetes', 'Jantung', 'Hepatitis']
+        if donor_data.get('riwayat_penyakit') in restricted_diseases:
+            return {
+                'status_layak': 0,
+                'probability': 0.0,
+                'features_used': ['Riwayat Penyakit (Strict Rule)']
+            }
         # Convert input ke DataFrame
         df = pd.DataFrame([donor_data])
         

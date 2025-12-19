@@ -178,6 +178,16 @@ require_once '../layouts/header.php';
             </div>
             
             <div class="form-row">
+                <div class="form-col">
+                    <div class="input-group">
+                        <label class="required" for="gender">Jenis Kelamin</label>
+                        <select id="gender" class="select-field" required>
+                            <option value="">Pilih</option>
+                            <option value="L">Laki - Laki</option>
+                            <option value="P">Perempuan</option>
+                        </select>
+                    </div>
+                </div>
                     <div class="form-col">
                         <div class="input-group">
                         <label for="jarak_ke_rs_km">Jarak ke Rumah Sakit (km)</label>
@@ -360,6 +370,7 @@ require_once '../layouts/header.php';
             name: document.getElementById('name').value,
             email: document.getElementById('email').value,
             contact_number: document.getElementById('contact_number').value,
+            gender: document.getElementById('gender').value,
             city: document.getElementById('city').value,
             blood_group: document.getElementById('blood_group').value + rhesusVal, // Concat Blood Group + Rhesus
             usia: parseInt(document.getElementById('usia').value),
@@ -394,26 +405,31 @@ require_once '../layouts/header.php';
                             ${isEligible ? 'ANDA LAYAK DONOR' : 'KURANG DISARANKAN'}
                         </div>
                         
-                        <div class="result-detail">
-                            <strong>ID Pendaftaran:</strong> ${result.donor_id}
-                        </div>
-                        <div class="result-detail">
-                            <strong>Skor Kelayakan:</strong> 
-                            <div style="background: #eee; height: 10px; border-radius: 5px; margin-top: 5px; overflow: hidden;">
-                                <div style="width: ${probability}%; background: ${isEligible ? '#4caf50' : '#ff9800'}; height: 100%;"></div>
-                            </div>
-                            <div style="text-align: right; font-size: 12px; margin-top: 3px;">${probability}% Match</div>
-                        </div>
-                        
                         <hr style="margin: 15px 0; border: 0; border-top: 1px dashed #ccc;">
                         
                         ${result.warning ? `
                             <div style="background: rgba(255, 255, 255, 0.6); padding: 10px; border-radius: 5px;">
-                                <strong style="color: #c62828;">Catatan Medis:</strong><br>
+                                <strong style="color: #c62828;">Alasan Medis:</strong><br>
                                 ${result.warning}
                                 ${result.suggestion ? `<ul style="margin-left: 20px; margin-top: 5px; font-size: 14px;">${result.suggestion.map(s => `<li>${s}</li>`).join('')}</ul>` : ''}
                             </div>
-                        ` : `<p style="color: #2e7d32; font-size: 14px;">Selamat! Data medis Anda menunjukkan bahwa Anda dalam kondisi prima untuk melakukan donor darah.</p>`}
+                        ` : `
+                        <div style="margin-bottom: 15px;">
+                            <p style="color: #2e7d32; font-size: 15px; font-weight: 500; margin-bottom: 10px;">
+                                Selamat! Data medis Anda menunjukkan bahwa Anda dalam kondisi prima untuk melakukan donor darah.
+                            </p>
+                        </div>
+                        
+                        <div style="background-color: #f0f7ff; border-radius: 8px; padding: 15px; border-left: 4px solid #f0f7ff; font-size: 13.5px; color: #444;">
+                            <strong style="display:block; margin-bottom:8px; color:#1976d2;">Catatan Penting:</strong>
+                            <ul style="padding-left: 15px; margin: 0; line-height: 1.5;">
+                                <li style="margin-bottom: 5px;">Hasil di atas merupakan prediksi awal berdasarkan data yang Anda masukkan.</li>
+                                <li style="margin-bottom: 5px;">Kelayakan donor sesungguhnya akan diputuskan oleh Dokter/Petugas Medis melalui pemeriksaan fisik di UTD/RS.</li>
+                                <li style="margin-bottom: 5px;">Pastikan Anda dalam kondisi prima (tidur minimal 5 jam dan sudah makan) sebelum mendonor.</li>
+                                <li>Harap membawa identitas diri (KTP, SIM, Paspor).</li>
+                            </ul>
+                        </div>
+                        `}
                     </div>
                 `;
                 
