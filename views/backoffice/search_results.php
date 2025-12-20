@@ -1,6 +1,6 @@
 <?php
 // Removed session check as per user request
-require_once '../layouts/header.php';
+require_once '../../layouts/header.php';
 ?>
 
 <style>
@@ -227,7 +227,7 @@ require_once '../layouts/header.php';
         }
     });
 </script>
-<script src="../assets/js/donor_search.js"></script>
+<script src="../../assets/js/donor_search.js"></script>
 <script>
     // Initialize results page specific logic
     document.addEventListener('DOMContentLoaded', () => {
@@ -248,4 +248,4 @@ require_once '../layouts/header.php';
     });
 </script>
 
-<?php require_once '../layouts/footer.php'; ?>
+<?php require_once '../../layouts/footer.php'; ?>

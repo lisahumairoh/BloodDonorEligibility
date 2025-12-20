@@ -1,9 +1,187 @@
-<?php
-// No auth check
-require_once '../layouts/header.php';
-?>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Rekomendasi Donor Darah - Pendaftaran</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f8f9fa; color: #333; line-height: 1.6; padding: 20px; }
+        
+        /* Layout & Container */
+        .container { max-width: 1200px; margin: 0 auto; background-color: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08); overflow: hidden; }
+        header { background-color: #c62828; color: white; padding: 25px 30px; border-bottom: 5px solid #b71c1c; }
+        h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        .subtitle { font-size: 16px; opacity: 0.9; }
+        
+        .main-content { display: flex; flex-wrap: wrap; }
+        .request-section { flex: 1.2; min-width: 400px; padding: 30px; border-right: 1px solid #eee; background-color: #f9f9f9; }
+        .recommendation-section { flex: 0.8; min-width: 300px; padding: 30px; background-color: white; }
+        
+        .section-title { color: #c62828; font-size: 22px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #ffebee; }
+        
+        /* Form Elements */
+        .form-group { margin-bottom: 25px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+        .required::after { content: " *"; color: #c62828; }
+        
+        .form-row { display: flex; flex-wrap: wrap; gap: 20px; }
+        .form-col { flex: 1; min-width: 200px; }
+        
+        .input-group { margin-bottom: 20px; }
+        .input-group label { margin-bottom: 8px; }
+        
+        .input-field, .select-field { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; background-color: white; }
+        .input-field:focus, .select-field:focus { border-color: #c62828; outline: none; box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.1); }
+        
+        /* Radio Buttons */
+        .radio-group { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 8px; }
+        .radio-option { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .radio-button { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #c62828; display: flex; align-items: center; justify-content: center; position: relative; }
+        .radio-button.selected::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background-color: #c62828; position: absolute; }
+        
+        /* Action Button */
+        .search-button { background-color: #c62828; color: white; border: none; padding: 14px 30px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; transition: background-color 0.3s; margin-top: 20px; }
+        .search-button:hover { background-color: #b71c1c; }
+        
+        /* Form Info */
+        .form-info { background-color: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; padding: 15px; margin-top: 25px; color: #2e7d32; font-size: 14px; display: flex; gap: 10px; align-items: center; }
+        
+        /* Result Box */
+        .result-card { margin-top: 20px; padding: 25px; border-radius: 12px; opacity: 0; transform: translateY(10px); transition: all 0.5s ease; }
+        .result-card.active { opacity: 1; transform: translateY(0); }
+        .result-card.success { background-color: #e8f5e9; border-left: 5px solid #2e7d32; }
+        .result-card.warning { background-color: #fff8e1; border-left: 5px solid #ffca28; }
+        .result-card.error { background-color: #ffebee; border-left: 5px solid #c62828; }
+        
+        .result-header { font-size: 20px; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .result-detail { margin-bottom: 10px; font-size: 15px; }
+        .result-detail strong { color: #555; }
+        
+        .eligibility-badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 14px; color: white; margin-left: 5px; }
+        .badge-success { background-color: #2e7d32; }
+        .badge-danger { background-color: #c62828; }
+        
+        .info-card { background-color: #e3f2fd; border-left: 5px solid #1976d2; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .info-title { font-weight: 700; color: #1565c0; margin-bottom: 10px; font-size: 16px; }
+        .info-text { font-size: 14px; color: #555; margin-bottom: 8px; }
+        
+        @media (max-width: 900px) {
+            .main-content { flex-direction: column; }
+            .request-section { border-right: none; border-bottom: 1px solid #eee; }
+        }
 
-<style>
+        /* Tambahan CSS untuk bagian kontak */
+    .contact-card {
+    background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+    border-left: 4px solid #2e7d32;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 15px 0;
+    box-shadow: 0 3px 10px rgba(46, 125, 50, 0.1);
+}
+
+    .contact-header {
+    font-weight: 700;
+    color: #2e7d32;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+}
+
+    .contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+    .contact-item {
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #c8e6c9;
+}
+
+    .contact-label {
+    font-weight: 600;
+    color: #555;
+    font-size: 13px;
+    margin-bottom: 5px;
+    display: block;
+}
+
+    .contact-value {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+    .action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+    .btn-whatsapp {
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    flex: 1;
+    transition: background 0.3s;
+}
+
+    .btn-whatsapp:hover {
+    background: #1da851;
+}
+
+    .btn-map {
+    background: #4285F4;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    flex: 1;
+    transition: background 0.3s;
+}
+
+    .btn-map:hover {
+    background: #3367d6;
+}
+
+    .btn-copy {
+    background: #757575;
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    margin-left: auto;
+    transition: background 0.3s;
+}
+
+    .btn-copy:hover {
+    background: #616161;
+}
     /* Layout & Container */
     .register-container { 
         display: flex; 
@@ -386,7 +564,8 @@ require_once '../layouts/header.php';
         
         try {
             // Kirim ke API - Adjust path to go up one level then to api
-            const response = await fetch('../api/add_donor.php', {
+            // Kirim ke API - Adjust path to go up two levels for views/public/
+            const response = await fetch('../../api/add_donor.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(donorData)
@@ -512,4 +691,3 @@ require_once '../layouts/header.php';
     }
 </script>
 
-<?php require_once '../layouts/footer.php'; ?>

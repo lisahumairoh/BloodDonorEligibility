@@ -1,6 +1,6 @@
 <?php
 // Session check removed
-require_once '../layouts/header.php';
+require_once '../../layouts/header.php';
 ?>
 
 <style>
@@ -294,6 +294,6 @@ require_once '../layouts/header.php';
 </div>
 
 <!-- Use external JS logic -->
-<script src="../assets/js/donor_search.js"></script>
+<script src="../../assets/js/donor_search.js"></script>
 
-<?php require_once '../layouts/footer.php'; ?>
+<?php require_once '../../layouts/footer.php'; ?>

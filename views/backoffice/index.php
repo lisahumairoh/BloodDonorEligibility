@@ -1,6 +1,5 @@
 <?php
-// Session check removed as per user request
-require_once 'layouts/header.php';
+require_once '../../layouts/header.php';
 ?>
 
 <style>
@@ -112,7 +111,7 @@ require_once 'layouts/header.php';
 <h3 style="margin-bottom: 20px; color: #444; border-left: 5px solid #c62828; padding-left: 15px;">Menu Utama</h3>
 
 <div class="dashboard-grid">
-    <a href="views/req_donorform.php" class="dashboard-card">
+    <a href="req_donorform.php" class="dashboard-card">
         <div class="card-icon">
             <i class="fas fa-search"></i>
         </div>
@@ -122,7 +121,17 @@ require_once 'layouts/header.php';
         </div>
     </a>
     
-    <a href="views/input_donor.php" class="dashboard-card">
+    <a href="request_list.php" class="dashboard-card">
+        <div class="card-icon" style="background-color: #e3f2fd; color: #1565c0;">
+            <i class="fas fa-list-alt"></i>
+        </div>
+        <div class="card-title" style="color: #1565c0;">Daftar Permintaan</div>
+        <div class="card-desc">
+            Lihat semua histori permintaan darah yang masuk, pantau status, dan cari donor untuk permintaan lama.
+        </div>
+    </a>
+    
+    <a href="input_donor.php" class="dashboard-card">
         <div class="card-icon">
             <i class="fas fa-user-plus"></i>
         </div>
@@ -143,4 +152,4 @@ require_once 'layouts/header.php';
     </a> -->
 </div>
 
-<?php require_once 'layouts/footer.php'; ?>
+<?php require_once '../../layouts/footer.php'; ?>

@@ -157,7 +157,7 @@ async function loadMoreDonors() {
         console.log(`Fetching page ${currentPage} for request ${currentRequestId}`);
 
         // NOTE: Path needs to be correct relative to where this script is called.
-        const response = await fetch(`../api/get_recommendations.php?request_id=${currentRequestId}&page=${currentPage}`);
+        const response = await fetch(`../../api/get_recommendations.php?request_id=${currentRequestId}&page=${currentPage}`);
 
         let text = await response.text();
 
@@ -313,7 +313,7 @@ function setupSearchFormLogic() {
 
             try {
                 // Adjust path to API based on location
-                const response = await fetch('../api/request_blood.php', {
+                const response = await fetch('../../api/request_blood.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
