@@ -409,12 +409,12 @@ require_once '../layouts/header.php';
                             </div>
                             <div style="margin-bottom: 15px;">
                                 <p style="color: #2e7d32; font-size: 15px; font-weight: 500; margin-bottom: 10px;">
-                                    <i class="fas fa-smile-beam"></i> Selamat! Data medis Anda menunjukkan bahwa Anda dalam kondisi prima untuk melakukan donor darah.
+                                    Data medis menunjukkan bahwa Anda dalam kondisi prima untuk melakukan donor darah.
                                 </p>
                             </div>
                             
                             <div style="background-color: #f0f7ff; border-radius: 8px; padding: 15px; border-left: 4px solid #2e7d32; font-size: 13.5px; color: #444;">
-                                <strong style="display:block; margin-bottom:8px; color:#2e7d32;">ℹ️ Catatan Penting:</strong>
+                                <strong style="display:block; margin-bottom:8px; color:#2e7d32;"><i class="fas fa-info-circle"></i> Catatan Penting:</strong>
                                 <ul style="padding-left: 15px; margin: 0; line-height: 1.5;">
                                     <li style="margin-bottom: 5px;">Hasil di atas merupakan prediksi awal berdasarkan data yang Anda masukkan.</li>
                                     <li style="margin-bottom: 5px;">Kelayakan donor sesungguhnya akan diputuskan oleh Dokter/Petugas Medis melalui pemeriksaan fisik di UTD/RS.</li>

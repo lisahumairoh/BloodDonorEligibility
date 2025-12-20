@@ -168,11 +168,6 @@ require_once '../layouts/header.php';
     
     <div class="results-header">
         <h2 style="color: #c62828; border-left: 4px solid #c62828; padding-left: 12px;">Hasil Pencarian Donor Darah</h2>
-        <div id="requestInfoBadge" style="background-color: #e3f2fd; color: #1565c0; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: 500;">
-           <!-- Request info will be injected here -->
-           <i class="fas fa-filter"></i> Menampilkan hasil pencarian
-        </div>
-        
         <!-- View Toggle Buttons -->
         <div class="view-toggle">
             <button class="toggle-btn active" data-view="table" title="Tampilan Tabel"><i class="fas fa-table"></i> Tabel</button>
