@@ -65,8 +65,11 @@ def predict_donor_eligibility(donor_data):
             return {'status_layak': 0, 'probability': 0.0, 'features_used': ['HB Tinggi > 17.0 (Darah Kental)']}
             
         # 4c. HB Rendah / Ditangguhkan (10.0 - Threshold) -> Status 2
+        # 4c. HB Rendah / Ditangguhkan (10.0 - Threshold) -> Status 2
         # Threshold: Pria 13.5, Wanita 12.5
-        min_hb = 13.5 if gender == 'L' else 12.5
+        # Ensure we catch 'L', 'Laki-laki', 'Male' as Male. Everything else (including 'P') as Female.
+        is_pria = gender in ['L', 'Laki-laki', 'Male', 'Pria']
+        min_hb = 13.5 if is_pria else 12.5
         if 10.0 <= hb < min_hb:
              return {
                 'status_layak': 2,
@@ -81,6 +84,28 @@ def predict_donor_eligibility(donor_data):
                 'probability': 0.0,
                 'features_used': ['Riwayat Penyakit (Strict Rule)']
             }
+
+        # --- GREEN RULE (SAFE BYPASS) ---
+        # Jika donor memenuhi semua kriteria medis ideal, bypass ML untuk menghindari false negative.
+        # Kriteria: Berat >= 45, Usia 17-60, Interval >= 2, Tidak ada penyakit, HB Normal.
+        
+        is_healthy_weight = int(donor_data.get('berat_badan', 0)) >= 45
+        is_healthy_age = 17 <= int(donor_data.get('usia', 0)) <= 60
+        # Don't strictly enforce interval for new donors (0 months)
+        interval_val = int(donor_data.get('months_since_first_donation', 0))
+        is_healthy_interval = interval_val >= 2 or interval_val == 0
+        no_disease = donor_data.get('riwayat_penyakit') == 'Tidak' or donor_data.get('riwayat_penyakit') == 'Tidak ada (Sehat)'
+        
+        # HB Check (already defined min_hb in strict rules above)
+        is_healthy_hb = hb >= min_hb and hb <= 17.0
+        
+        if is_healthy_weight and is_healthy_age and is_healthy_interval and no_disease and is_healthy_hb:
+             return {
+                'status_layak': 1,
+                'probability': 0.98, # High confidence override
+                'features_used': ['Lulus Kriteria Medis (Green Rule)']
+            }
+        # --------------------------------
         # Convert input ke DataFrame
         df = pd.DataFrame([donor_data])
         

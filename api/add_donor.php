@@ -271,8 +271,9 @@ function check_eligibility_manual($data) {
     }
     
     // Rule 3: HB Level (pria min 13.5, wanita min 12.5)
-    // Asumsi: cek dari nama untuk menentukan gender
-    $is_wanita = preg_match('/(mrs|ms|miss|female|woman|perempuan)/i', $data['name']);
+    // Rule 3: HB Level (pria min 13.5, wanita min 12.5)
+    $gender = isset($data['gender']) ? $data['gender'] : 'L';
+    $is_wanita = ($gender === 'P' || $gender === 'Perempuan' || $gender === 'Female');
     $hb_min = $is_wanita ? 12.5 : 13.5;
     
     if ($data['hb_level'] < $hb_min) {
@@ -311,7 +312,7 @@ function get_eligibility_suggestions($data) {
     
     // Cek Gender: 'P' or 'Perempuan' -> Wanita
     $gender = isset($data['gender']) ? $data['gender'] : '';
-    $is_wanita = ($gender === 'P' || stripos($gender, 'Perempuan') !== false);
+    $is_wanita = ($gender === 'P' || $gender === 'Perempuan' || $gender === 'Female');
     
     // HB Min: Wanita 12.5, Pria 13.5
     $hb_min = $is_wanita ? 12.5 : 13.5;

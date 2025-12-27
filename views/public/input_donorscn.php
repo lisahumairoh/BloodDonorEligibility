@@ -368,7 +368,7 @@
                 </div>
                     <div class="form-col">
                         <div class="input-group">
-                        <label for="jarak_ke_rs_km">Jarak ke Rumah Sakit (km)</label>
+                        <label for="jarak_ke_rs_km">Jarak ke PMI (km)</label>
                         <input type="number" id="jarak_ke_rs_km" class="input-field" min="0" step="0.1" value="10.0" placeholder="Estimasi jarak">
                         </div>
                     </div>
@@ -499,11 +499,33 @@
         <h2 class="section-title"><i class="fas fa-clipboard-check"></i> Hasil Prediksi</h2>
         
         <div class="info-card">
-            <div class="info-title">Syarat Utama Donor Darah</div>
-            <div class="info-text"><i class="fas fa-check-circle" style="color: green; margin-right: 5px;"></i> Usia 17 - 60 tahun</div>
-            <div class="info-text"><i class="fas fa-check-circle" style="color: green; margin-right: 5px;"></i> Berat badan minimal 45 kg</div>
-            <div class="info-text"><i class="fas fa-check-circle" style="color: green; margin-right: 5px;"></i> Kadar Hemoglobin 12.5 - 17.0 g/dL</div>
-            <div class="info-text"><i class="fas fa-check-circle" style="color: green; margin-right: 5px;"></i> Sehat jasmani dan rohani</div>
+            <div class="info-title"><i class="fas fa-info-circle"></i> Syarat Utama Donor Darah</div>
+            <ul style="list-style: none; padding: 0; margin-top: 10px;">
+                <li style="margin-bottom: 8px; display: flex; align-items: start; gap: 8px;">
+                    <i class="fas fa-check-circle" style="color: #2e7d32; margin-top: 3px;"></i> 
+                    <span>Usia 17 - 60 tahun</span>
+                </li>
+                <li style="margin-bottom: 8px; display: flex; align-items: start; gap: 8px;">
+                    <i class="fas fa-check-circle" style="color: #2e7d32; margin-top: 3px;"></i> 
+                    <span>Berat badan minimal 45 kg</span>
+                </li>
+                <li style="margin-bottom: 8px; display: flex; align-items: start; gap: 8px;">
+                    <i class="fas fa-check-circle" style="color: #2e7d32; margin-top: 3px;"></i> 
+                    <span>Kadar Hemoglobin 12.5 - 17.0 g/dL</span>
+                </li>
+                <li style="margin-bottom: 8px; display: flex; align-items: start; gap: 8px; margin-left: 20px; font-size: 0.9em; color: #555;">
+                    <!-- <i class="fas fa-venus" style="color: #e91e63; margin-top: 3px;"></i>  -->
+                    <span>Perempuan: Min 12.5 g/dL</span>
+                </li>
+                <li style="margin-bottom: 8px; display: flex; align-items: start; gap: 8px; margin-left: 20px; font-size: 0.9em; color: #555;">
+                    <!-- <i class="fas fa-mars" style="color: #1976d2; margin-top: 3px;"></i>  -->
+                    <span>Laki-laki: Min 13.5 g/dL</span>
+                </li>
+                <li style="margin-bottom: 8px; display: flex; align-items: start; gap: 8px;">
+                    <i class="fas fa-check-circle" style="color: #2e7d32; margin-top: 3px;"></i> 
+                    <span>Sehat jasmani dan rohani</span>
+                </li>
+            </ul>
         </div>
         
         <div id="resultContainer">
@@ -584,7 +606,7 @@
                     resultHTML = `
                         <div class="result-card active eligible">
                             <div class="result-header" style="color: #2e7d32;">
-                                <i class="fas fa-check-circle"></i> ANDA LAYAK DONOR
+                                <i class="fas fa-check-circle"></i> LAYAK DONOR
                             </div>
                             <div style="margin-bottom: 15px;">
                                 <p style="color: #2e7d32; font-size: 15px; font-weight: 500; margin-bottom: 10px;">
@@ -596,7 +618,7 @@
                                 <strong style="display:block; margin-bottom:8px; color:#2e7d32;"><i class="fas fa-info-circle"></i> Catatan Penting:</strong>
                                 <ul style="padding-left: 15px; margin: 0; line-height: 1.5;">
                                     <li style="margin-bottom: 5px;">Hasil di atas merupakan prediksi awal berdasarkan data yang Anda masukkan.</li>
-                                    <li style="margin-bottom: 5px;">Kelayakan donor sesungguhnya akan diputuskan oleh Dokter/Petugas Medis melalui pemeriksaan fisik di UTD/RS.</li>
+                                    <li style="margin-bottom: 5px;">Kelayakan donor sesungguhnya akan diputuskan oleh Dokter/Petugas Medis melalui pemeriksaan fisik di tempat.</li>
                                     <li style="margin-bottom: 5px;">Pastikan Anda dalam kondisi prima (tidur minimal 5 jam dan sudah makan) sebelum mendonor.</li>
                                     <li>Harap membawa identitas diri (KTP, SIM, Paspor).</li>
                                 </ul>

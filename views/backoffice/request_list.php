@@ -33,7 +33,22 @@ require_once '../../layouts/header.php';
         }
         
         table { width: 100%; border-collapse: collapse; }
-        th { background: #f8f9fa; color: #555; font-weight: 700; padding: 15px; text-align: left; border-bottom: 2px solid #eee; }
+        th { 
+            background: #f8f9fa; 
+            color: #555; 
+            font-weight: 700; 
+            padding: 15px; 
+            text-align: left; 
+            border-bottom: 2px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+            user-select: none;
+        }
+        th:hover { background-color: #eee; }
+        th i { margin-left: 5px; opacity: 0.3; }
+        th.sort-asc i { opacity: 1; transform: rotate(180deg); }
+        th.sort-desc i { opacity: 1; }
+
         td { padding: 15px; border-bottom: 1px solid #eee; color: #333; vertical-align: middle; }
         tr:hover { background-color: #fffde7; }
         
@@ -67,13 +82,13 @@ require_once '../../layouts/header.php';
             <table id="requestsTable">
                 <thead>
                     <tr>
-                        <th>ID Request</th>
-                        <th>Pemohon / RS</th>
-                        <th>Gol. Darah</th>
-                        <th>Jumlah</th>
-                        <th>Urgensi</th>
-                        <th>Status</th>
-                        <th>Tanggal</th>
+                        <th onclick="sortTable('request_id')">ID Request <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable('requester_name')">Pemohon / RS <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable('blood_type')">Gol. Darah <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable('blood_bags')">Jumlah <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable('urgency_level')">Urgensi <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable('status')">Status <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable('request_date')">Tanggal <i class="fas fa-sort"></i></th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -90,6 +105,9 @@ require_once '../../layouts/header.php';
 </div>
 
 <script>
+let allRequests = [];
+let currentSort = { column: 'request_date', direction: 'desc' };
+
 document.addEventListener('DOMContentLoaded', loadRequests);
 
 async function loadRequests() {
@@ -97,50 +115,16 @@ async function loadRequests() {
         const response = await fetch('../../api/get_requests.php');
         const result = await response.json();
         
-        const tbody = document.getElementById('tableBody');
-        
-        if (result.success && result.data.length > 0) {
-            tbody.innerHTML = result.data.map(req => {
-                // Determine CSS classes
-                let statusClass = 'badge-pending';
-                if(req.status === 'processing') statusClass = 'badge-processing';
-                if(req.status === 'completed') statusClass = 'badge-completed';
-                if(req.status === 'cancelled') statusClass = 'badge-cancelled';
-                
-                let urgencyClass = 'urgency-rendah'; // Default
-                if(req.urgency_level === 'tinggi') urgencyClass = 'urgency-tinggi';
-                if(req.urgency_level === 'sedang') urgencyClass = 'urgency-sedang';
-                
-                // Format Date
-                const date = new Date(req.request_date).toLocaleString('id-ID', { 
-                    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                });
-                
-                return `
-                    <tr>
-                        <td><small style="font-family: monospace; font-size: 13px;">${req.request_id}</small></td>
-                        <td style="font-weight: 600;">${req.requester_name}</td>
-                        <td>
-                            <span style="font-weight: bold; color: #c62828;">${req.blood_type}</span>
-                        </td>
-                        <td>${req.blood_bags} Kantong</td>
-                        <td><span class="urgency-badge ${urgencyClass}">${req.urgency_level}</span></td>
-                        <td><span class="badge ${statusClass}">${req.status}</span></td>
-                        <td style="font-size: 13px; color: #666;">${date}</td>
-                        <td>
-                            <a href="search_results.php?request_id=${req.request_id}" class="action-btn">
-                                <i class="fas fa-search-location"></i> Cari Donor
-                            </a>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+        if (result.success) {
+            allRequests = result.data;
+            // Initial Sort
+            sortData(currentSort.column, currentSort.direction);
+            renderTable();
         } else {
-            tbody.innerHTML = `
+             document.getElementById('tableBody').innerHTML = `
                 <tr>
                     <td colspan="8" style="text-align: center; padding: 40px; color: #777;">
-                        <i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 10px; display: block; opacity: 0.3;"></i>
-                        Belum ada permintaan darah yang masuk.
+                        Belum ada data.
                     </td>
                 </tr>
             `;
@@ -151,6 +135,120 @@ async function loadRequests() {
             <tr>
                 <td colspan="8" style="text-align: center; color: #c62828; padding: 20px;">
                     <i class="fas fa-exclamation-circle"></i> Gagal memuat data.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function sortTable(column) {
+    // Toggle direction if clicking same column
+    if (currentSort.column === column) {
+        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+        currentSort.column = column;
+        currentSort.direction = 'asc';
+    }
+    
+    // Update Icons
+    updateHeaderIcons();
+    
+    // Sort Data
+    sortData(column, currentSort.direction);
+    
+    // Render
+    renderTable();
+}
+
+function updateHeaderIcons() {
+    // Reset all headers
+    document.querySelectorAll('th').forEach(th => {
+        th.classList.remove('sort-asc', 'sort-desc');
+        const icon = th.querySelector('i');
+        if(icon) icon.className = 'fas fa-sort';
+    });
+    
+    // Set active header
+    const headers = document.querySelectorAll('th');
+    let activeIndex = -1;
+    
+    if(currentSort.column === 'request_id') activeIndex = 0;
+    if(currentSort.column === 'requester_name') activeIndex = 1;
+    if(currentSort.column === 'blood_type') activeIndex = 2;
+    if(currentSort.column === 'blood_bags') activeIndex = 3;
+    if(currentSort.column === 'urgency_level') activeIndex = 4;
+    if(currentSort.column === 'status') activeIndex = 5;
+    if(currentSort.column === 'request_date') activeIndex = 6;
+    
+    if (activeIndex > -1) {
+        const th = headers[activeIndex];
+        th.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+        th.querySelector('i').className = currentSort.direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+    }
+}
+
+function sortData(column, direction) {
+    allRequests.sort((a, b) => {
+        let valA = a[column];
+        let valB = b[column];
+        
+        // Handle numbers
+        if (column === 'blood_bags') {
+            valA = parseInt(valA);
+            valB = parseInt(valB);
+        }
+        
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+}
+
+function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    
+    if (allRequests.length > 0) {
+        tbody.innerHTML = allRequests.map(req => {
+            // Determine CSS classes
+            let statusClass = 'badge-pending';
+            if(req.status === 'processing') statusClass = 'badge-processing';
+            if(req.status === 'completed') statusClass = 'badge-completed';
+            if(req.status === 'cancelled') statusClass = 'badge-cancelled';
+            
+            let urgencyClass = 'urgency-rendah'; // Default
+            if(req.urgency_level === 'tinggi') urgencyClass = 'urgency-tinggi';
+            if(req.urgency_level === 'sedang') urgencyClass = 'urgency-sedang';
+            
+            // Format Date
+            const date = new Date(req.request_date).toLocaleString('id-ID', { 
+                day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+            
+            return `
+                <tr>
+                    <td><small style="font-family: monospace; font-size: 13px;">${req.request_id}</small></td>
+                    <td style="font-weight: 600;">${req.requester_name}</td>
+                    <td>
+                        <span style="font-weight: bold; color: #c62828;">${req.blood_type}</span>
+                    </td>
+                    <td>${req.blood_bags} Kantong</td>
+                    <td><span class="urgency-badge ${urgencyClass}">${req.urgency_level}</span></td>
+                    <td><span class="badge ${statusClass}">${req.status}</span></td>
+                    <td style="font-size: 13px; color: #666;">${date}</td>
+                    <td>
+                        <a href="search_results.php?request_id=${req.request_id}" class="action-btn">
+                            <i class="fas fa-search-location"></i> Cari Donor
+                        </a>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } else {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 40px; color: #777;">
+                    <i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 10px; display: block; opacity: 0.3;"></i>
+                    Belum ada permintaan darah yang masuk.
                 </td>
             </tr>
         `;

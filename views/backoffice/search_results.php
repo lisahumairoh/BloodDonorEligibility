@@ -184,7 +184,22 @@ require_once '../../layouts/header.php';
         /* Table Styles */
         .donor-table-container { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .donor-table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        .donor-table th { background: #f8f9fa; color: #444; font-weight: 600; padding: 15px; text-align: left; border-bottom: 2px solid #eee; }
+        .donor-table th { 
+            background: #f8f9fa; 
+            color: #444; 
+            font-weight: 600; 
+            padding: 15px; 
+            text-align: left; 
+            border-bottom: 2px solid #eee; 
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+        .donor-table th:hover { background-color: #eee; }
+        .donor-table th i { margin-left: 5px; opacity: 0.3; transition: transform 0.2s; }
+        .donor-table th.sort-asc i { opacity: 1; transform: rotate(180deg); }
+        .donor-table th.sort-desc i { opacity: 1; }
+
         .donor-table td { padding: 15px; border-bottom: 1px solid #eee; color: #333; vertical-align: middle; }
         .donor-table tr:hover { background-color: #fffde7; }
         
@@ -227,7 +242,7 @@ require_once '../../layouts/header.php';
         }
     });
 </script>
-<script src="../../assets/js/donor_search.js"></script>
+<script src="../../assets/js/donor_search.js?v=<?php echo time(); ?>"></script>
 <script>
     // Initialize results page specific logic
     document.addEventListener('DOMContentLoaded', () => {

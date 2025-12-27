@@ -36,41 +36,97 @@ function renderDonors() {
     }
 }
 
+let currentSort = { column: 'score', direction: 'desc' }; // Default sort by score desc
+
+function sortTable(column) {
+    // Toggle direction
+    if (currentSort.column === column) {
+        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+        currentSort.column = column;
+        currentSort.direction = 'asc';
+    }
+
+    // Sort array
+    allDonors.sort((a, b) => {
+        let valA = a[column];
+        let valB = b[column];
+
+        // Special handling
+        if (column === 'distance') {
+            // "1.1 km" -> 1.1
+            valA = parseFloat(valA.replace(' km', ''));
+            valB = parseFloat(valB.replace(' km', ''));
+        } else if (column === 'age' || column === 'score' || column === 'hb_level') {
+            valA = parseFloat(valA);
+            valB = parseFloat(valB);
+        }
+
+        if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    renderDonors();
+}
+
 function renderTableView(container) {
     // Ubah container style untuk table
     container.style.display = 'block';
+
+    // Helper to get icon class
+    const getSortIcon = (col) => {
+        if (currentSort.column !== col) return 'fa-sort';
+        return currentSort.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+    };
+
+    // Helper to get th class
+    const getSortClass = (col) => {
+        if (currentSort.column !== col) return '';
+        return currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc';
+    };
 
     const tableHTML = `
         <div class="donor-table-container">
             <table class="donor-table">
                 <thead>
                     <tr>
-                        <th>Nama</th>
-                        <th>Gol. Darah</th>
-                        <th>Usia</th>
-                        <th>Jarak</th>
-                        <th>Skor</th>
+                        <th onclick="sortTable('name')" class="${getSortClass('name')}">Nama <i class="fas ${getSortIcon('name')}"></i></th>
+                        <th onclick="sortTable('gender')" class="${getSortClass('gender')}">Gender <i class="fas ${getSortIcon('gender')}"></i></th>
+                        <th onclick="sortTable('blood_type')" class="${getSortClass('blood_type')}">Gol. <i class="fas ${getSortIcon('blood_type')}"></i></th>
+                        <th onclick="sortTable('hb_level')" class="${getSortClass('hb_level')}">HB <i class="fas ${getSortIcon('hb_level')}"></i></th>
+                        <th onclick="sortTable('age')" class="${getSortClass('age')}">Usia <i class="fas ${getSortIcon('age')}"></i></th>
+                        <th onclick="sortTable('city')" class="${getSortClass('city')}">Kota <i class="fas ${getSortIcon('city')}"></i></th>
+                        <th onclick="sortTable('distance')" class="${getSortClass('distance')}">Jarak <i class="fas ${getSortIcon('distance')}"></i></th>
+                        <th onclick="sortTable('score')" class="${getSortClass('score')}">Skor <i class="fas ${getSortIcon('score')}"></i></th>
                         <th>Kontak</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${allDonors.map(donor => `
+                    ${allDonors.map(donor => {
+        const waMessage = `Halo ${donor.name},\nSaat ini kami membutuhkan donor darah golongan ${donor.blood_type}.\nMohon kesediaannya untuk datang ke PMI (Jakarta Selatan).\nBantuan Anda sangat berarti. Terima kasih`;
+        const waUrl = `https://wa.me/${donor.contact.replace(/^0/, '62')}?text=${encodeURIComponent(waMessage)}`;
+
+        return `
                         <tr>
                             <td>
                                 <div style="font-weight: bold;">${donor.name}</div>
-                                <div style="font-size: 12px; color: #666;">Donor terakhir: ${donor.last_donation}</div>
+                                <div style="font-size: 12px; color: #666;">Last: ${donor.last_donation}</div>
                             </td>
+                            <td>${donor.gender}</td>
                             <td><span class="table-blood-badge">${donor.blood_type}</span></td>
+                            <td>${donor.hb_level}</td>
                             <td>${donor.age} thn</td>
+                            <td>${donor.city}</td>
                             <td><i class="fas fa-map-marker-alt" style="color: #c62828;"></i> ${donor.distance}</td>
                             <td><i class="fas fa-star" style="color: #ffb300;"></i> ${donor.score}</td>
                             <td>
-                                <a href="https://wa.me/${donor.contact.replace(/^0/, '62')}" target="_blank" class="table-action-btn">
+                                <a href="${waUrl}" target="_blank" class="table-action-btn">
                                     <i class="fab fa-whatsapp"></i> Hubungi
                                 </a>
                             </td>
                         </tr>
-                    `).join('')}
+                    `}).join('')}
                 </tbody>
             </table>
         </div>

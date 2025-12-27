@@ -118,7 +118,10 @@ function generate_recommendations($conn, $request_id, $donors) {
             'distance' => round($distance, 1) . ' km',
             'last_donation' => ($donor['months_since_first_donation'] ?? 0) . ' bulan lalu',
             'score' => number_format($match_score, 1),
-            'contact' => $donor['contact_number']
+            'contact' => $donor['contact_number'],
+            'hb_level' => $donor['hb_level'],
+            'gender' => $donor['gender'],
+            'city' => $donor['city']
         ];
     }
     
