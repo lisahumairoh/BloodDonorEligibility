@@ -129,46 +129,50 @@ function generate_recommendations($conn, $request_id, $donors) {
 }
 
 function calculate_match_score($donor) {
-    // Base Score untuk donor layak = 4.0
-    $score = 4.0;
+    // Base Score (Modal awal) = 3.0
+    $score = 3.0;
     
-    // 1. Factor Kesehatan (Hb Level)
+    // 1. Factor Jarak (Distance)
+    $dist = $donor['jarak_ke_rs_km'];
+    if ($dist <= 2.0) {
+        $score += 1.0;
+    } elseif ($dist <= 5.0) {
+        $score += 0.7;
+    } elseif ($dist <= 10.0) {
+        $score += 0.4;
+    }
+    // > 10 km adds 0.0
+    
+    // 2. Factor Kesehatan (Health)
+    // HB Sangat Baik (14-16)
     if ($donor['hb_level'] >= 14 && $donor['hb_level'] <= 16) {
-        $score += 0.3;
-    } elseif ($donor['hb_level'] >= 13) {
-        $score += 0.1;
+        $score += 0.4;
     }
     
-    // 2. Factor Berat Badan
+    // Berat Badan Ideal (> 65kg)
     if ($donor['berat_badan'] > 65) {
         $score += 0.2;
     }
     
-    // 3. Factor Jarak
-    $dist = $donor['jarak_ke_rs_km'];
-    if ($dist <= 2.0) {
+    // Riwayat Donor Aman (+0.1)
+    // Asumsi: Tidak ada riwayat penyakit yang tercatat
+    if (empty($donor['riwayat_penyakit']) || $donor['riwayat_penyakit'] === '-') {
+        $score += 0.1;
+    }
+    
+    // 3. Track Record (Pengalaman Donor)
+    $donations = $donor['number_of_donation'];
+    if ($donations > 20) {
+        $score += 0.8;
+    } elseif ($donations > 10) { // 11 - 20
         $score += 0.5;
-    } elseif ($dist <= 5.0) {
+    } elseif ($donations >= 3) { // 3 - 10
         $score += 0.3;
-    } elseif ($dist <= 10.0) {
+    } else { // < 3
         $score += 0.1;
     }
     
-    // 4. Factor Pengalaman
-    if ($donor['number_of_donation'] > 10) {
-        $score += 0.2;
-    }
-    
-    // 5. Usia Produktif
-    if ($donor['usia'] >= 20 && $donor['usia'] <= 40) {
-        $score += 0.1;
-    }
-    
-    // Penalty
-    if ($donor['months_since_first_donation'] > 24 && $donor['number_of_donation'] < 3) {
-        $score -= 0.2;
-    }
-    
+    // Cap score at 5.0 max and 1.0 min
     return min(5.0, max(1.0, $score));
 }
 

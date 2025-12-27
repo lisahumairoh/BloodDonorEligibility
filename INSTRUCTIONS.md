@@ -44,7 +44,7 @@ Jika script Python gagal dijalankan (misal error library/path), PHP akan mengamb
 
 | Parameter | Syarat Layak |
 |-----------|--------------|
-| Usia | 17 - 65 tahun |
+| Usia | 17 - 60 tahun |
 | Berat Badan | Min 45 kg |
 | HB Level | Pria: ≥ 13.5, Wanita: ≥ 12.5 |
 | Penyakit | Bebas Hepatitis & Jantung |
@@ -170,11 +170,11 @@ Muncul pada saat **Pencarian / Rekomendasi** (`index.php`).
 - **Komponen Penilaian**:
   | Komponen | Bobot Skor |
   |----------|------------|
-  | **Base Score** | 4.0 (Modal awal jika layak) |
-  | **Jarak Lokasi** | +0.5 (Sangat Dekat <2km), +0.3 (<5km), +0.1 (<10km) |
-  | **Kesehatan** | +0.3 (HB Prima), +0.2 (Berat Ideal >65kg) |
-  | **Track Record** | +0.2 (Donor >10x) |
-  | **Penalty** | -0.2 (Donor Pasif/Jarang) |
+  | **Base Score** | 3.0 (Modal awal jika layak) |
+  | **Jarak Lokasi** | +1.0 (<2km), +0.7 (<5km), +0.4 (<10km) |
+  | **Kesehatan** | +0.4 (HB 14-16), +0.2 (Berat >65kg), +0.1 (Riwayat Aman) |
+  | **Track Record** | +0.8 (>20x), +0.5 (10-20x), +0.3 (3-9x), +0.1 (<3x) |
+  | **Penalty** | *Dihapus* (Digantikan dengan tier track record) |
 - **Nilai Maksimal**: 5.0 (Sempurna - Dekat, Sehat, Veteran).
 
 ---
@@ -188,3 +188,38 @@ Sistem menggunakan 3 status kelayakan yang ditentukan oleh kombinasi **Strict Ru
 | **TIDAK LAYAK** | `0` | **Strict Rules:**<br>• Berat Badan < 45 kg<br>• Usia < 17 atau > 60 tahun<br>• Ada Riwayat Penyakit (Hipertensi, Diabetes, Jantung, Hepatitis)<br>• HB < 10.0 (Anemia Berat)<br>• HB > 17.0 (Darah Kental) | **Merah (Ditolak)**<br>User dilarang donor karena alasan medis fatal/mutlak. |
 | **DITANGGUHKAN** | `2` | **Logic:**<br>• HB 10.0 - < 12.5 (Wanita)<br>• HB 10.0 - < 13.5 (Pria)<br>• Interval Donor < 2 bulan (jika bukan donor baru) | **Kuning (Warning)**<br>User sehat tapi kondisi saat ini belum optimal. Disarankan kembali setelah perbaikan nutrisi/waktu. |
 | **LAYAK** | `1` | **Logic:**<br>• Lolos semua Strict Rules (0)<br>• Lolos semua Logic Penangguhan (2)<br>• Probabilitas ML > 50% | **Hijau (Success)**<br>Kondisi prima dan siap donor. |
+
+---
+
+## 7. Log Perubahan Harian (27 Desember 2025)
+
+Berikut adalah ringkasan teknis pekerjaan yang diselesaikan hari ini:
+
+### A. Frontend & UI/UX
+1.  **Fixed Public Footer (`views/public/index.php`)**:
+    *   Memperbaiki struktur HTML. Footer sebelumnya terjebak dalam `.container` form sehingga lebarnya terbatas. Menambahkan tag penutup `</div>` yang hilang.
+2.  **Dashboard Chart (`views/backoffice/index.php`)**:
+    *   Mengimplementasikan **Chart.js Doughnut Chart** untuk memvisualisasikan data real-time status kelayakan donor (Layak, Ditangguhkan, Tidak Layak).
+    *   Memperbaiki layout dashboard yang sempat rusak (overwrite content).
+3.  **Simplified Widget Data Donor (`views/backoffice/data_donor.php`)**:
+    *   Mengubah widget stok darah menjadi desain flat yang lebih sederhana dan bersih.
+    *   Menambahkan total count header.
+
+### B. Fitur & Fungsionalitas
+1.  **Pagination Data Donor**:
+    *   Mengganti teks statis "Menampilkan 20 data" dengan sistem **Pagination Dinamis**.
+    *   Limit diset ke **20 data per halaman**.
+    *   Menambahkan tombol navigasi (Next/Prev) dan indikator halaman.
+2.  **Inline Status Update (`views/backoffice/request_list.php`)**:
+    *   Mengubah kolom status menjadi **Dropdown Menu**.
+    *   Membuat API endpoint baru `api/update_request_status.php` untuk menangani update status secara asynchronous (tanpa reload).
+    *   Status visual update otomatis (warna badge berubah sesuai status: OPEN/FULFILLED/dll).
+
+### C. Backend & Logic
+1.  **Fix Infinite Loading (`data_donor.php`)**:
+    *   Menemukan dan memperbaiki syntax error Javascript (extra `}`) yang menyebabkan tabel gagal memuat data.
+2.  **Investigasi Logic HB**:
+    *   Mengonfirmasi logic "Ditangguhkan" di `ml/predict.py`:
+        *   Wanita: HB 10.0 - 12.4
+        *   Pria: HB 10.0 - 13.4
+        *   Interval Donor < 2 bulan.

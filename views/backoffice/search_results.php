@@ -170,8 +170,8 @@ require_once '../../layouts/header.php';
         <h2 style="color: #c62828; border-left: 4px solid #c62828; padding-left: 12px;">Hasil Pencarian Donor Darah</h2>
         <!-- View Toggle Buttons -->
         <div class="view-toggle">
-            <button class="toggle-btn active" data-view="table" title="Tampilan Tabel"><i class="fas fa-table"></i> Tabel</button>
-            <button class="toggle-btn" data-view="list" title="Tampilan List"><i class="fas fa-th-large"></i> Kartu</button>
+            <button class="toggle-btn active" data-view="table" title="Tampilan Tabel"><i class="fas fa-table"></i> List</button>
+            <button class="toggle-btn" data-view="list" title="Tampilan List"><i class="fas fa-th-large"></i> Card</button>
         </div>
     </div>
     

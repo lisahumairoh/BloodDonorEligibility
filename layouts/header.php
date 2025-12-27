@@ -88,7 +88,7 @@ if (!isset($_SESSION['user_id']) && $current_page !== 'login.php') {
         <div class="header-content">
             <div class="header-left">
                 <a href="index.php" style="text-decoration: none; display: block;">
-                    <h1><i class="fas fa-droplet"></i> BloodMatch AI</h1>
+                    <h1><i class="fas fa-droplet"></i> DonorDarah</h1>
                     <p class="subtitle">Sistem Rekomendasi & Prediksi Kelayakan Donor Darah</p>
                 </a>
             </div>
@@ -98,7 +98,7 @@ if (!isset($_SESSION['user_id']) && $current_page !== 'login.php') {
                 // Since this header is included by files in views/backoffice/, links are relative to THAT directory.
                 ?>
                 <a href="index.php" class="nav-link <?php echo ($current_page == 'index.php') ? 'active' : ''; ?>">
-                    Beranda
+                    Dashboard
                 </a>
                 <a href="req_donorform.php" class="nav-link <?php echo ($current_page == 'req_donorform.php' || $current_page == 'search_results.php') ? 'active' : ''; ?>">
                    Cari Donor

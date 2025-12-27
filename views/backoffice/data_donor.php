@@ -1,14 +1,31 @@
 <?php
 require_once '../../layouts/header.php';
+require_once '../../api/db.php';
+
+try {
+    $db = new Database();
+    $conn = $db->getConnection();
+ // 3. Blood type (Eligible Donors)
+    $blood_stock_query = "SELECT blood_group, COUNT(*) as count FROM donors WHERE status_layak = 1 GROUP BY blood_group";
+    $blood_stock_result = $conn->query($blood_stock_query);
+    $blood_stock = [];
+    while($row = $blood_stock_result->fetch_assoc()) {
+        $blood_stock[$row['blood_group']] = $row['count'];
+    }
+    
+    // Ensure all types are present
+    $all_blood_types = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+    foreach($all_blood_types as $bt) {
+        if (!isset($blood_stock[$bt])) {
+            $blood_stock[$bt] = 0;
+        }
+    }
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage();
+}
 ?>
 
 <div class="main-content">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-        <h2 style="color: #c62828; border-left: 5px solid #c62828; padding-left: 15px;">Data Donor Darah</h2>
-        <a href="input_donor.php" class="add-btn">
-            <i class="fas fa-plus"></i> Tambah Donor Baru
-        </a>
-    </div>
 
     <style>
         .add-btn {
@@ -77,7 +94,33 @@ require_once '../../layouts/header.php';
         }
         .action-btn:hover { background: #1565c0; color: white; }
     </style>
-
+<!-- Blood Type Widget -->
+<!-- Blood Type Widget -->
+<div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #c62828; padding-bottom: 10px; margin-bottom: 15px;">
+        <h3 style="color: #333; margin: 0; font-size: 18px;">Pendonor Layak</h3>
+        <span style="font-weight: bold; background: #c62828; color: white; padding: 5px 10px; border-radius: 5px; font-size: 14px;">Total: <?php echo array_sum($blood_stock); ?></span>
+    </div>
+    
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between;">
+        <?php foreach($all_blood_types as $bt): ?>
+        <div style="background: #fdfdfd; border: 1px solid #eee; border-radius: 6px; padding: 10px; text-align: center; flex: 1; min-width: 60px;">
+            <div style="color: #c62828; font-weight: bold; font-size: 16px;">
+                <?php echo $bt; ?>
+            </div>
+            <div style="font-size: 15px; color: #555; margin-top: 2px;">
+                <?php echo number_format($blood_stock[$bt]); ?>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <h2 style="color: #c62828; border-left: 5px solid #c62828; padding-left: 15px;">Data Donor Darah</h2>
+        <a href="input_donor.php" class="add-btn">
+            <i class="fas fa-plus"></i> Tambah Donor Baru
+        </a>
+    </div>
     <div class="donor-card">
         <div style="overflow-x: auto;">
             <table id="donorsTable">
@@ -102,29 +145,76 @@ require_once '../../layouts/header.php';
                 </tbody>
             </table>
         </div>
-        <!-- Simple Pagination Info (Optional) -->
-        <div style="padding: 15px; text-align: right; color: #666; font-size: 13px; border-top: 1px solid #eee;">
-            Menampilkan 20 data terbaru
+        <!-- Pagination Controls -->
+        <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-top: 1px solid #eee;">
+            <div id="paginationInfo" style="color: #666; font-size: 14px;">
+                Menuat data...
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button id="prevBtn" class="page-btn" disabled onclick="changePage(-1)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <span id="pageIndicator" style="font-weight: 600; color: #333; min-width: 60px; text-align: center;">Page 1</span>
+                <button id="nextBtn" class="page-btn" disabled onclick="changePage(1)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
         </div>
+        
+        <style>
+            .page-btn {
+                background: white;
+                border: 1px solid #ddd;
+                width: 36px;
+                height: 36px;
+                border-radius: 6px;
+                cursor: pointer;
+                color: #555;
+                font-size: 14px;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .page-btn:hover:not(:disabled) {
+                background: #f5f5f5;
+                border-color: #ccc;
+                color: #c62828;
+            }
+            .page-btn:disabled {
+                background: #f9f9f9;
+                color: #ccc;
+                cursor: not-allowed;
+                border-color: #eee;
+            }
+        </style>
     </div>
 </div>
 
 <script>
 let allDonors = [];
+let currentPage = 1;
+const limit = 20;
+let totalPages = 1;
 
-document.addEventListener('DOMContentLoaded', loadDonors);
+document.addEventListener('DOMContentLoaded', () => loadDonors(1));
 
-async function loadDonors() {
+async function loadDonors(page) {
+    currentPage = page;
+    updatePaginationUI(true); // Loading state
+
     try {
-        // Use the existing API for filtering (default pagination is 20)
-        const response = await fetch('../../api/add_donor.php?page=1&limit=50', {
+        const response = await fetch(`../../api/add_donor.php?page=${page}&limit=${limit}`, {
             method: 'GET'
         });
         const result = await response.json();
         
         if (result.success) {
             allDonors = result.donors;
+            if(result.pagination) totalPages = result.pagination.pages;
+            
             renderTable();
+            updatePaginationUI(false, result.pagination);
         } else {
              document.getElementById('tableBody').innerHTML = `
                 <tr>
@@ -187,6 +277,7 @@ function renderTable() {
                         <a href="https://wa.me/${donor.contact_number.replace(/^0/, '62')}" target="_blank" class="action-btn">
                             <i class="fab fa-whatsapp"></i> Hubungi
                         </a>
+
                     </td>
                 </tr>
             `;
@@ -200,6 +291,41 @@ function renderTable() {
                 </td>
             </tr>
         `;
+    }
+}
+
+
+function changePage(delta) {
+    if ((delta < 0 && currentPage > 1) || (delta > 0 && currentPage < totalPages)) {
+        loadDonors(currentPage + delta);
+    }
+}
+
+function updatePaginationUI(isLoading, paginationData = null) {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const pageIndicator = document.getElementById('pageIndicator');
+    const infoDiv = document.getElementById('paginationInfo');
+    
+    if (isLoading) {
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+        infoDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat...';
+        return;
+    }
+    
+    if (paginationData) {
+        totalPages = paginationData.pages;
+        currentPage = parseInt(paginationData.page);
+        
+        pageIndicator.textContent = `Page ${currentPage} / ${totalPages}`;
+        
+        const start = (currentPage - 1) * limit + 1;
+        const end = Math.min(currentPage * limit, paginationData.total);
+        infoDiv.textContent = `Menampilkan ${start}-${end} dari ${paginationData.total} data`;
+        
+        prevBtn.disabled = (currentPage <= 1);
+        nextBtn.disabled = (currentPage >= totalPages);
     }
 }
 </script>

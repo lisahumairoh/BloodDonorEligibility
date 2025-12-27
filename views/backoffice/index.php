@@ -27,22 +27,28 @@ try {
     $layak = $status_counts['layak'] ?? 0;
     $tidak_layak = $status_counts['tidak_layak'] ?? 0;
     $ditangguhkan = $status_counts['ditangguhkan'] ?? 0;
+    $layak = $status_counts['layak'] ?? 0;
+    $tidak_layak = $status_counts['tidak_layak'] ?? 0;
+    $ditangguhkan = $status_counts['ditangguhkan'] ?? 0;
     
-    // 3. Blood Stock (Eligible Donors)
-    $blood_stock_query = "SELECT blood_group, COUNT(*) as count FROM donors WHERE status_layak = 1 GROUP BY blood_group";
-    $blood_stock_result = $conn->query($blood_stock_query);
-    $blood_stock = [];
-    while($row = $blood_stock_result->fetch_assoc()) {
-        $blood_stock[$row['blood_group']] = $row['count'];
-    }
+    // 3. Requests by Blood Type
+    $query_requests = "
+        SELECT 
+            blood_type, 
+            COUNT(*) as total 
+        FROM blood_requests 
+        GROUP BY blood_type
+    ";
+    $result_requests = $conn->query($query_requests);
     
-    // Ensure all types are present
-    $all_blood_types = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-    foreach($all_blood_types as $bt) {
-        if (!isset($blood_stock[$bt])) {
-            $blood_stock[$bt] = 0;
-        }
+    $request_labels = [];
+    $request_data = [];
+    
+    while($row = $result_requests->fetch_assoc()) {
+        $request_labels[] = $row['blood_type'];
+        $request_data[] = $row['total'];
     }
+   
     
     $conn->close();
     
@@ -132,6 +138,8 @@ try {
     .stat-box {
         background-color: rgba(29, 29, 29, 0.2);
         padding: 20px;
+        padding-left: 10px;
+        padding-right: 10px;
         color: white;
         border-radius: 10px;
         text-align: center;
@@ -180,7 +188,7 @@ try {
         <h2 style="font-size: 28px; margin-bottom: 10px;">Dashboard Admin</h2>
         <p style="opacity: 0.9; max-width: 400px;">Ringkasan data donor darah dan status kelayakan berdasarkan prediksi AI.</p>
     </div>
-    
+
     <div class="stats-container">
         <div class="stat-box">
             <div class="stat-number"><?php echo number_format($total_donors); ?></div>
@@ -192,10 +200,10 @@ try {
             <div class="stat-label"><i class="fas fa-check-circle"></i> Layak</div>
         </div>
         
-        <!-- <div class="stat-box" style="background-color: rgba(255, 152, 0, 0.2);">
+        <div class="stat-box" style="background-color: rgba(255, 153, 0, 0.77);">
             <div class="stat-number"><?php echo number_format($ditangguhkan); ?></div>
             <div class="stat-label"><i class="fas fa-exclamation-triangle"></i> Ditangguhkan</div>
-        </div> -->
+        </div>
         
         <div class="stat-box" style="background-color: rgba(218, 93, 84, 1);">
             <div class="stat-number"><?php echo number_format($tidak_layak); ?></div>
@@ -203,6 +211,27 @@ try {
         </div>
     </div>
 </div>
+
+<!-- Charts Section -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; margin-bottom: 40px;">
+    <!-- Prediction Stats Chart -->
+    <div style="background-color: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee;">
+        <h3 style="margin-bottom: 25px; color: #444; border-left: 5px solid #1565c0; padding-left: 15px;">Statistik Prediksi Kelayakan</h3>
+        <div style="position: relative; height: 300px; width: 100%; display: flex; justify-content: center;">
+            <canvas id="predictionChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Request Stats Chart -->
+    <div style="background-color: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee;">
+        <h3 style="margin-bottom: 25px; color: #444; border-left: 5px solid #c62828; padding-left: 15px;">Permintaan Darah per Golongan</h3>
+        <div style="position: relative; height: 300px; width: 100%; display: flex; justify-content: center;">
+            <canvas id="requestChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <h3 style="margin-bottom: 20px; color: #444; border-left: 5px solid #1565c0; padding-left: 15px;">Menu Utama</h3>
 
@@ -228,10 +257,10 @@ try {
     </a>
     
     <a href="input_donor.php" class="dashboard-card">
-        <div class="card-icon" style="background-color: #f3e5f5; color: #8e24aa;">
+        <div class="card-icon" style="background-color: #f3e5f5; color: #b61f1fff;">
             <i class="fas fa-user-plus"></i>
         </div>
-        <div class="card-title" style="color: #8e24aa;">Registrasi Donor</div>
+        <div class="card-title" style="color: #b61f1fff;">Registrasi Donor</div>
         <div class="card-desc">
             Daftarkan diri Anda atau orang lain sebagai pendonor baru. Sistem akan mengecek kelayakan medis secara otomatis.
         </div>
@@ -247,5 +276,138 @@ try {
         </div>
     </a>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('predictionChart').getContext('2d');
+        
+        // Data from PHP
+        const layak = <?php echo $layak; ?>;
+        const ditangguhkan = <?php echo $ditangguhkan; ?>;
+        const tidakLayak = <?php echo $tidak_layak; ?>;
+        
+        const predictionChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Layak', 'Ditangguhkan', 'Tidak Layak'],
+                datasets: [{
+                    label: 'Jumlah Donor',
+                    data: [layak, ditangguhkan, tidakLayak],
+                    backgroundColor: [
+                        'rgba(60, 180, 56, 0.8)',   // Layak - Green
+                        'rgba(255, 153, 0, 0.8)',   // Ditangguhkan - Orange
+                        'rgba(218, 93, 84, 0.8)'    // Tidak Layak - Red
+                    ],
+                    borderColor: [
+                        'rgba(60, 180, 56, 1)',
+                        'rgba(255, 153, 0, 1)',
+                        'rgba(218, 93, 84, 1)'
+                    ],
+                    borderWidth: 1,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            font: {
+                                size: 14,
+                                family: "'Segoe UI', sans-serif"
+                            },
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: {
+                            size: 14
+                        },
+                        bodyFont: {
+                            size: 14
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                let value = context.raw || 0;
+                                let total = context.chart._metasets[context.datasetIndex].total;
+                                let percentage = Math.round((value / total) * 100) + '%';
+                                return label + ': ' + value + ' (' + percentage + ')';
+                            }
+                        }
+                    }
+                },
+                layout: {
+                    padding: 20
+                },
+                animation: {
+                    animateScale: true,
+                    animateRotate: true
+                }
+            }
+        });
+    });
 
+    // Request Chart
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctxRequests = document.getElementById('requestChart').getContext('2d');
+        
+        const requestChart = new Chart(ctxRequests, {
+            type: 'bar',
+            data: {
+                labels: <?php echo json_encode($request_labels); ?>,
+                datasets: [{
+                    label: 'Jumlah Permintaan',
+                    data: <?php echo json_encode($request_data); ?>,
+                    backgroundColor: function(context) {
+                        const label = context.chart.data.labels[context.dataIndex];
+                        if (label.includes('A') && !label.includes('B')) return 'rgba(239, 83, 80, 0.7)'; 
+                        if (label.includes('B') && !label.includes('A')) return 'rgba(66, 165, 245, 0.7)';
+                        if (label.includes('AB')) return 'rgba(76, 175, 80, 0.7)'; 
+                        if (label.includes('O')) return 'rgba(255, 167, 38, 0.7)'; 
+                        return 'rgba(158, 158, 158, 0.7)'; // Grey for others
+                    },
+                    borderColor: function(context) {
+                        const label = context.chart.data.labels[context.dataIndex];
+                        if (label.includes('A') && !label.includes('B')) return 'rgba(239, 83, 80, 1)';
+                        if (label.includes('B') && !label.includes('A')) return 'rgba(66, 165, 245, 1)';
+                        if (label.includes('AB')) return 'rgba(76, 175, 80, 1)';
+                        if (label.includes('O')) return 'rgba(255, 167, 38, 1)';
+                        return 'rgba(158, 158, 158, 1)';
+                    },
+                    borderWidth: 1,
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: { size: 14 },
+                        bodyFont: { size: 14 }
+                    }
+                }
+            }
+        });
+    });
+</script>
 <?php require_once '../../layouts/footer.php'; ?>

@@ -75,6 +75,28 @@ require_once '../../layouts/header.php';
             display: inline-flex; align-items: center; gap: 5px;
         }
         .action-btn:hover { background: #c62828; color: white; }
+            .status-select {
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            text-align: center;
+            appearance: none; /* Remove default arrow in some browsers for badge look */
+            -webkit-appearance: none;
+            background-position: right 10px center;
+            background-repeat: no-repeat;
+            background-size: 10px;
+        }
+        
+        .status-pending { background-color: #ffebee; color: #c62828; border-color: #ffcdd2; }
+        .status-open { background-color: #e3f2fd; color: #1565c0; border-color: #bbdefb; }
+        .status-progress { background-color: #fff3e0; color: #ef6c00; border-color: #ffe0b2; }
+        .status-fulfilled { background-color: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
+        .status-closed { background-color: #f5f5f5; color: #616161; border-color: #eeeeee; }
+        .status-cancelled { background-color: #ffebee; color: #b71c1c; border-color: #ffcdd2; text-decoration: line-through; }
     </style>
 
     <div class="request-card">
@@ -233,7 +255,16 @@ function renderTable() {
                     </td>
                     <td>${req.blood_bags} Kantong</td>
                     <td><span class="urgency-badge ${urgencyClass}">${req.urgency_level}</span></td>
-                    <td><span class="badge ${statusClass}">${req.status}</span></td>
+                    <td>
+                        <select onchange="updateRequestStatus(this, '${req.request_id}')" class="status-select ${getStatusClass(req.status)}">
+                            <option value="PENDING" ${req.status === 'PENDING' ? 'selected' : ''}>PENDING</option>
+                            <option value="OPEN" ${req.status === 'OPEN' ? 'selected' : ''}>OPEN</option>
+                            <option value="IN_PROGRESS" ${req.status === 'IN_PROGRESS' ? 'selected' : ''}>IN PROGRESS</option>
+                            <option value="FULFILLED" ${req.status === 'FULFILLED' ? 'selected' : ''}>FULFILLED</option>
+                            <option value="CLOSED" ${req.status === 'CLOSED' ? 'selected' : ''}>CLOSED</option>
+                            <option value="CANCELLED" ${req.status === 'CANCELLED' ? 'selected' : ''}>CANCELLED</option>
+                        </select>
+                    </td>
                     <td style="font-size: 13px; color: #666;">${date}</td>
                     <td>
                         <a href="search_results.php?request_id=${req.request_id}" class="action-btn">
@@ -254,6 +285,52 @@ function renderTable() {
         `;
     }
 }
+
+function getStatusClass(status) {
+    switch(status) {
+        case 'OPEN': return 'status-open';
+        case 'IN_PROGRESS': return 'status-progress';
+        case 'FULFILLED': return 'status-fulfilled';
+        case 'CLOSED': return 'status-closed';
+        case 'CANCELLED': return 'status-cancelled';
+        default: return 'status-pending';
+    }
+}
+
+async function updateRequestStatus(selectElement, requestId) {
+    const newStatus = selectElement.value;
+    const originalColor = selectElement.className;
+    
+    // Optimistic UI update for color
+    selectElement.className = `status-select ${getStatusClass(newStatus)}`;
+    
+    try {
+        const response = await fetch('../../api/update_request_status.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                request_id: requestId,
+                status: newStatus
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Optional: Show toast success
+            console.log('Status updated');
+        } else {
+            alert('Gagal update status: ' + result.message);
+            // Revert on failure logic could go here
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan koneksi');
+    }
+}
+
 </script>
 
 <?php require_once '../../layouts/footer.php'; ?>
