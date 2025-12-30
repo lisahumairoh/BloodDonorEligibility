@@ -801,7 +801,7 @@
                     <li><a href="#about">Tentang</a></li>
                     <li><a href="#process">Proses</a></li>
                     <li><a href="#eligibility">Syarat</a></li>
-                    <li><a href="#locations">Lokasi</a></li>
+                    <!-- <li><a href="#locations">Lokasi</a></li> -->
                     <li><a href="#contact">Kontak</a></li>
                 </ul>
                 
@@ -1046,7 +1046,7 @@
                 </div>
                 <div class="form-col">
                     <div class="input-group">
-                        <label class="required" for="hb_level">HB Level (g/dL)</label>
+                        <label for="hb_level">HB Level (g/dL)</label>
                         <input type="number" id="hb_level" class="input-field" step="0.1" placeholder="13.5">
                         <small style="color: #666; font-size: 12px;">Normal: 12.5 - 17.0</small>
                     </div>

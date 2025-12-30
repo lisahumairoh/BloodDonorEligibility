@@ -97,6 +97,33 @@ require_once '../../layouts/header.php';
         .status-fulfilled { background-color: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
         .status-closed { background-color: #f5f5f5; color: #616161; border-color: #eeeeee; }
         .status-cancelled { background-color: #ffebee; color: #b71c1c; border-color: #ffcdd2; text-decoration: line-through; }
+
+        /* Pagination Styles */
+        .page-btn {
+            background: white;
+            border: 1px solid #ddd;
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #555;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .page-btn:hover:not(:disabled) {
+            background: #f5f5f5;
+            border-color: #ccc;
+            color: #c62828;
+        }
+        .page-btn:disabled {
+            background: #f9f9f9;
+            color: #ccc;
+            cursor: not-allowed;
+            border-color: #eee;
+        }
     </style>
 
     <div class="request-card">
@@ -123,12 +150,28 @@ require_once '../../layouts/header.php';
                 </tbody>
             </table>
         </div>
+        <!-- Pagination Controls -->
+        <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-top: 1px solid #eee;">
+            <div id="paginationInfo" style="color: #666; font-size: 14px;">
+                Memuat data...
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button id="prevBtn" class="page-btn" disabled onclick="changePage(-1)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <span id="pageIndicator" style="font-weight: 600; color: #333; min-width: 60px; text-align: center;">Page 1</span>
+                <button id="nextBtn" class="page-btn" disabled onclick="changePage(1)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
 let allRequests = [];
 let currentSort = { column: 'request_date', direction: 'desc' };
+let totalPages = 1;
 
 document.addEventListener('DOMContentLoaded', loadRequests);
 
@@ -139,9 +182,12 @@ async function loadRequests() {
         
         if (result.success) {
             allRequests = result.data;
-            // Initial Sort
+            // Initial Sort and Render (Page 1)
+            currentPage = 1;
             sortData(currentSort.column, currentSort.direction);
+            // renderTable called inside sortData now or verify it does not conflicts
             renderTable();
+            updatePaginationUI(false);
         } else {
              document.getElementById('tableBody').innerHTML = `
                 <tr>
@@ -226,11 +272,20 @@ function sortData(column, direction) {
     });
 }
 
+// Pagination Variables
+let currentPage = 1;
+const itemsPerPage = 20;
+
 function renderTable() {
     const tbody = document.getElementById('tableBody');
     
-    if (allRequests.length > 0) {
-        tbody.innerHTML = allRequests.map(req => {
+    // Calculate Pagination Slices
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedItems = allRequests.slice(startIndex, endIndex);
+
+    if (paginatedItems.length > 0) {
+        tbody.innerHTML = paginatedItems.map(req => {
             // Determine CSS classes
             let statusClass = 'badge-pending';
             if(req.status === 'processing') statusClass = 'badge-processing';
@@ -331,6 +386,49 @@ async function updateRequestStatus(selectElement, requestId) {
     }
 }
 
+
+function changePage(delta) {
+    const maxPages = Math.ceil(allRequests.length / itemsPerPage);
+    const newPage = currentPage + delta;
+    
+    if (newPage >= 1 && newPage <= maxPages) {
+        currentPage = newPage;
+        renderTable();
+        updatePaginationUI(false);
+    }
+}
+
+function updatePaginationUI(isLoading) {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const pageIndicator = document.getElementById('pageIndicator');
+    const infoDiv = document.getElementById('paginationInfo');
+    const totalItems = allRequests.length;
+    const maxPages = Math.ceil(totalItems / itemsPerPage);
+    
+    if (isLoading) {
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+        infoDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat...';
+        return;
+    }
+    
+    // Update State
+    pageIndicator.textContent = `Page ${currentPage} / ${maxPages || 1}`;
+    
+    const start = (currentPage - 1) * itemsPerPage + 1;
+    const end = Math.min(currentPage * itemsPerPage, totalItems);
+    
+    if(totalItems === 0) {
+         infoDiv.textContent = 'Menampilkan 0 data';
+    } else {
+         infoDiv.textContent = `Menampilkan ${start}-${end} dari ${totalItems} data`;
+    }
+   
+    
+    prevBtn.disabled = (currentPage <= 1);
+    nextBtn.disabled = (currentPage >= maxPages);
+}
 </script>
 
 <?php require_once '../../layouts/footer.php'; ?>

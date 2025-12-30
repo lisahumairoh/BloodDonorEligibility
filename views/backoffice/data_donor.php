@@ -261,6 +261,9 @@ function renderTable() {
                 statusText = 'Tidak Layak';
             }
             
+            const waMessage = `Halo ${donor.name},\nSaat ini kami membutuhkan donor darah golongan ${donor.blood_group}.\nMohon kesediaannya untuk datang ke PMI (Kota Depok).\nBantuan Anda sangat berarti. Terima kasih`;
+            const waUrl = `https://wa.me/${donor.contact_number.replace(/^0/, '62')}?text=${encodeURIComponent(waMessage)}`;
+
             return `
                 <tr>
                     <td>
@@ -274,7 +277,7 @@ function renderTable() {
                     <td>${donor.hb_level}</td>
                     <td><span class="badge ${statusBadge}">${statusText}</span></td>
                     <td>
-                        <a href="https://wa.me/${donor.contact_number.replace(/^0/, '62')}" target="_blank" class="action-btn">
+                        <a href="${waUrl}" target="_blank" class="action-btn">
                             <i class="fab fa-whatsapp"></i> Hubungi
                         </a>
 
