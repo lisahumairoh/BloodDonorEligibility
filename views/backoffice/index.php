@@ -185,7 +185,7 @@ try {
 
 <div class="welcome-banner">
     <div style="flex: 1;">
-        <h2 style="font-size: 28px; margin-bottom: 10px;">Dashboard Admin</h2>
+        <h2 style="font-size: 28px; margin-bottom: 10px;">Dashboard</h2>
         <p style="opacity: 0.9; max-width: 400px;">Ringkasan data donor darah dan status kelayakan berdasarkan prediksi AI.</p>
     </div>
 

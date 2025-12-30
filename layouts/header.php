@@ -88,7 +88,7 @@ if (!isset($_SESSION['user_id']) && $current_page !== 'login.php') {
         <div class="header-content">
             <div class="header-left">
                 <a href="index.php" style="text-decoration: none; display: block;">
-                    <h1><i class="fas fa-droplet"></i> DonorDarah</h1>
+                    <h1><i class="fas fa-droplet"></i> PMI-Kota Depok</h1>
                     <p class="subtitle">Sistem Rekomendasi & Prediksi Kelayakan Donor Darah</p>
                 </a>
             </div>

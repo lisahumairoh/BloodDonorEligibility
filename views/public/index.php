@@ -793,7 +793,7 @@
             <nav class="navbar">
                 <div class="logo">
                     <i class="fas fa-tint"></i>
-                    <span>DonorDarah</span>
+                    <span>DonorDarah Kota Depok</span>
                 </div>
                 
                 <ul class="nav-links">
@@ -1047,7 +1047,7 @@
                 <div class="form-col">
                     <div class="input-group">
                         <label class="required" for="hb_level">HB Level (g/dL)</label>
-                        <input type="number" id="hb_level" class="input-field" step="0.1" placeholder="13.5" required>
+                        <input type="number" id="hb_level" class="input-field" step="0.1" placeholder="13.5">
                         <small style="color: #666; font-size: 12px;">Normal: 12.5 - 17.0</small>
                     </div>
                 </div>

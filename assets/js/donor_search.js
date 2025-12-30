@@ -104,7 +104,7 @@ function renderTableView(container) {
                 </thead>
                 <tbody>
                     ${allDonors.map(donor => {
-        const waMessage = `Halo ${donor.name},\nSaat ini kami membutuhkan donor darah golongan ${donor.blood_type}.\nMohon kesediaannya untuk datang ke PMI (Jakarta Selatan).\nBantuan Anda sangat berarti. Terima kasih`;
+        const waMessage = `Halo ${donor.name},\nSaat ini kami membutuhkan donor darah golongan ${donor.blood_type}.\nMohon kesediaannya untuk datang ke PMI (Kota Depok).\nBantuan Anda sangat berarti. Terima kasih`;
         const waUrl = `https://wa.me/${donor.contact.replace(/^0/, '62')}?text=${encodeURIComponent(waMessage)}`;
 
         return `
