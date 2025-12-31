@@ -953,7 +953,7 @@
                 <div class="form-col">
                         <div class="input-group">
                         <label class="required" for="city">Kota Domisili</label>
-                        <input type="text" id="city" class="input-field" value="Jakarta Selatan" required>
+                        <input type="text" id="city" class="input-field" placeholder="Depok" required>
                     </div>
                 </div>
             </div>
@@ -1046,8 +1046,8 @@
                 </div>
                 <div class="form-col">
                     <div class="input-group">
-                        <label for="hb_level">HB Level (g/dL)</label>
-                        <input type="number" id="hb_level" class="input-field" step="0.1" placeholder="13.5">
+                        <label for="hb_level">HB Level (g/dL) <small style="font-weight: normal; color: #999;">(Opsional jika belum tahu)</small></label>
+                        <input type="number" id="hb_level" class="input-field" step="0.1" placeholder="Kosongkan jika tidak tahu">
                         <small style="color: #666; font-size: 12px;">Normal: 12.5 - 17.0</small>
                     </div>
                 </div>
@@ -1069,14 +1069,14 @@
                 <div class="form-col">
                         <div class="input-group">
                         <label for="number_of_donation">Jumlah Donor Sebelumnya</label>
-                        <input type="number" id="number_of_donation" class="input-field" min="0" value="0">
+                        <input type="number" id="number_of_donation" class="input-field" min="0"  placeholder="0" required>
                         </div>
                 </div>
                 <div class="form-col">
                         <div class="input-group">
                         <label for="months_since_first_donation">Terakhir Donor (bulan)</label>
-                        <input type="number" id="months_since_first_donation" class="input-field" min="0" value="0">
-                        <small style="color: #666; font-size: 12px;">Min: 2 bulan</small>
+                        <input type="number" id="months_since_first_donation" class="input-field" min="0" placeholder="0" required >
+                        <!-- <small style="color: #666; font-size: 12px;">Min: 2 bulan</small> -->
                         </div>
                 </div>
             </div>
@@ -1194,7 +1194,10 @@
             blood_group: document.getElementById('blood_group').value + rhesusVal, // Concat Blood Group + Rhesus
             usia: parseInt(document.getElementById('usia').value),
             berat_badan: parseInt(document.getElementById('berat_badan').value),
-            hb_level: parseFloat(document.getElementById('hb_level').value),
+            usia: parseInt(document.getElementById('usia').value),
+            berat_badan: parseInt(document.getElementById('berat_badan').value),
+            hb_level: document.getElementById('hb_level').value ? parseFloat(document.getElementById('hb_level').value) : null,
+            riwayat_penyakit: document.getElementById('riwayat_penyakit').value,
             riwayat_penyakit: document.getElementById('riwayat_penyakit').value,
             number_of_donation: parseInt(document.getElementById('number_of_donation').value) || 0,
             months_since_first_donation: parseInt(document.getElementById('months_since_first_donation').value) || 0,
@@ -1265,6 +1268,26 @@
                             
                             <div style="margin-top: 15px; font-size: 13px; color: #555;">
                                 <i class="fas fa-info-circle"></i> Silakan perbaiki nutrisi (zat besi/vitamin) dan kembali setelah kondisi membaik.
+                            </div>
+                        </div>
+                    `;
+                } else if (status === 3) {
+                     // BUTUH CEK KESEHATAN (Blue/Info)
+                    resultHTML = `
+                        <div class="result-card active eligible" style="border-left: 5px solid #0288d1; background: #e1f5fe;">
+                            <div class="result-header" style="color: #0277bd;">
+                                <i class="fas fa-user-md"></i> PERLU PEMERIKSAAN
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <p style="color: #01579b; font-size: 15px; font-weight: 500;">
+                                    Silahkan datang ke PMI untuk melakukan pemeriksaan kesehatan.
+                                </p>
+                            </div>
+                            
+                            <div style="background: rgba(255, 255, 255, 0.6); padding: 10px; border-radius: 5px; font-size: 13.5px; color: #444;">
+                                <strong style="color: #0277bd;">Info:</strong><br>
+                                Data dasar Anda memenuhi syarat, namun karena kadar Hemoglobin belum diketahui, kami perlu memastikannya melalui pemeriksaan langsung.
                             </div>
                         </div>
                     `;

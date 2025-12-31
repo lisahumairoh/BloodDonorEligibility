@@ -22,7 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     
     // Validasi data yang diperlukan
-    $required_fields = ['name', 'email', 'contact_number', 'blood_group', 'usia', 'berat_badan', 'hb_level'];
+    // hb_level is no longer required for initial check
+    $required_fields = ['name', 'email', 'contact_number', 'blood_group', 'usia', 'berat_badan'];
     foreach ($required_fields as $field) {
         if (empty($data[$field])) {
             echo json_encode([
@@ -55,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'number_of_donation' => $number_of_donation,
         'usia' => $data['usia'],
         'berat_badan' => $data['berat_badan'],
-        'hb_level' => $data['hb_level'],
+        'hb_level' => !empty($data['hb_level']) ? $data['hb_level'] : 0,
         'riwayat_penyakit' => $riwayat_penyakit,
         'riwayat_penyakit' => $riwayat_penyakit,
         'jarak_ke_rs_km' => $jarak_ke_rs_km,
@@ -64,8 +65,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     try {
         // Jalankan prediksi kelayakan menggunakan ML model
-        $prediction = run_ml_prediction($ml_data);
-        $status_layak = $prediction['status_layak'] ?? 0;
+        // Logic khusus: Jika HB Level kosong (null/0), cek kriteria dasar fisik saja
+        $hb_level_input = isset($data['hb_level']) && $data['hb_level'] !== '' ? $data['hb_level'] : null;
+        
+        if ($hb_level_input === null) {
+             // Basic Check (Manual Rule without HB)
+             $manual_check = check_eligibility_manual($ml_data, true); // true = skip HB check
+             if ($manual_check['status_layak'] == 1) {
+                 $status_layak = 3; // Status 3: Butuh Cek Kesehatan (Datang ke PMI)
+             } else {
+                 $status_layak = 0; // Tidak layak karena faktor lain (usia/berat/penyakit)
+             }
+             // Set hb_level to 0 for DB
+             $data['hb_level'] = 0;
+             $prediction = ['probability' => null];
+        } else {
+            $prediction = run_ml_prediction($ml_data);
+            $status_layak = $prediction['status_layak'] ?? 0;
+        }
         
         // Insert data donor ke database
         $stmt = $conn->prepare("INSERT INTO donors (
@@ -88,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $number_of_donation,
             $data['usia'],
             $data['berat_badan'],
-            $data['hb_level'],
+            $data['hb_level'], // Will be 0 if unknown
             $riwayat_penyakit,
             $jarak_ke_rs_km,
             $status_layak,
@@ -249,14 +266,14 @@ function run_ml_prediction($data) {
             return $result;
         } else {
             // Fallback: gunakan rule-based checking jika ML gagal
-            return check_eligibility_manual($data);
+            return check_eligibility_manual($data, false);
         }
     }
     
     return ['status_layak' => 0, 'error' => 'Gagal menjalankan prediksi'];
 }
 
-function check_eligibility_manual($data) {
+function check_eligibility_manual($data, $skip_hb = false) {
     // Rule-based checking sebagai fallback
     $layak = 1;
     
@@ -271,13 +288,14 @@ function check_eligibility_manual($data) {
     }
     
     // Rule 3: HB Level (pria min 13.5, wanita min 12.5)
-    // Rule 3: HB Level (pria min 13.5, wanita min 12.5)
-    $gender = isset($data['gender']) ? $data['gender'] : 'L';
-    $is_wanita = ($gender === 'P' || $gender === 'Perempuan' || $gender === 'Female');
-    $hb_min = $is_wanita ? 12.5 : 13.5;
-    
-    if ($data['hb_level'] < $hb_min) {
-        $layak = 0;
+    if (!$skip_hb) {
+        $gender = isset($data['gender']) ? $data['gender'] : 'L';
+        $is_wanita = ($gender === 'P' || $gender === 'Perempuan' || $gender === 'Female');
+        $hb_min = $is_wanita ? 12.5 : 13.5;
+        
+        if ($data['hb_level'] < $hb_min) {
+            $layak = 0;
+        }
     }
     
     // Rule 4: Riwayat penyakit kritis
