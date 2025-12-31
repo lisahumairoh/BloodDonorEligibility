@@ -1075,7 +1075,7 @@
                 <div class="form-col">
                         <div class="input-group">
                         <label for="months_since_first_donation">Terakhir Donor (bulan)</label>
-                        <input type="number" id="months_since_first_donation" class="input-field" min="0" placeholder="0" required >
+                        <input type="number" id="months_since_first_donation" class="input-field" min="0" placeholder="0" >
                         <!-- <small style="color: #666; font-size: 12px;">Min: 2 bulan</small> -->
                         </div>
                 </div>
@@ -1352,6 +1352,52 @@
         
         // Trigger radio update manually if needed or just let visual stay default
     }
+    // Logic: Jika Jumlah Donor > 0, maka Terakhir Donor wajib diisi dan TIDAK BOLEH 0
+    const numDonorInput = document.getElementById('number_of_donation');
+    const lastDonorInput = document.getElementById('months_since_first_donation');
+    const lastDonorLabel = document.querySelector('label[for="months_since_first_donation"]');
+    
+    function updateLastDonorState() {
+        const val = parseInt(numDonorInput.value) || 0;
+        if (val > 0) {
+            // Case: Pernah Donor
+            lastDonorInput.required = true;
+            lastDonorInput.disabled = false;
+            lastDonorInput.setAttribute('min', '1'); // HTML5 constraint
+            
+            // Jika value masih 0, kosongkan agar user mengisi
+            if (lastDonorInput.value == '0') {
+               lastDonorInput.value = '';
+            }
+            
+            lastDonorLabel.classList.add('required');
+        } else {
+            // Case: Belum Pernah Donor (0)
+            lastDonorInput.required = false;
+            lastDonorInput.disabled = true; // Disable field
+            lastDonorInput.removeAttribute('min');
+            lastDonorInput.value = 0; // Auto-fill 0
+            lastDonorLabel.classList.remove('required');
+        }
+    }
+
+    // Listener changes on Number of Donation
+    numDonorInput.addEventListener('input', updateLastDonorState);
+    
+    // Listener strict validation on Last Donor Input
+    lastDonorInput.addEventListener('change', function() {
+        const numVal = parseInt(numDonorInput.value) || 0;
+        const lastVal = parseInt(this.value);
+        
+        if (numVal > 0 && lastVal === 0) {
+            alert("Perhatian: Karena Anda sudah pernah mendonorkan darah (Jumlah > 0), maka 'Terakhir Donor' tidak boleh 0 bulan.\n\nSilakan isi jarak waktu sebenarnya sejak donor terakhir Anda.");
+            this.value = ''; // Reset invalid value
+            this.focus();
+        }
+    });
+    
+    // Init on load
+    updateLastDonorState();
 </script>
 
     </div></div> <!-- Close register-container and its wrapper container -->
