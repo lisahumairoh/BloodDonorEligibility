@@ -37,13 +37,24 @@ COPY . /var/www/html
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
-# === FINAL FIX: FORCE REMOVE CONFLICTING MPMs ===
-# Railway kadang me-load mpm_event secara default, kita paksa hapus manual symlink-nya
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.load \
-    && rm -f /etc/apache2/mods-enabled/mpm_event.conf \
-    && rm -f /etc/apache2/mods-enabled/mpm_worker.load \
-    && rm -f /etc/apache2/mods-enabled/mpm_worker.conf \
-    && a2enmod mpm_prefork
+# === FINAL ULTIMATE FIX: RUNTIME CONFIGURATION ===
+# Kita buat script startup langsung di dalam image agar tidak kena masalah Windows CRLF
+# Script ini akan dijalankan SETIAP KALI container start
+RUN echo '#!/bin/bash' > /start.sh \
+    && echo 'echo "--> Fixing Apache MPM Configuration..."' >> /start.sh \
+    && echo 'rm -f /etc/apache2/mods-enabled/mpm_event.load' >> /start.sh \
+    && echo 'rm -f /etc/apache2/mods-enabled/mpm_event.conf' >> /start.sh \
+    && echo 'rm -f /etc/apache2/mods-enabled/mpm_worker.load' >> /start.sh \
+    && echo 'rm -f /etc/apache2/mods-enabled/mpm_worker.conf' >> /start.sh \
+    && echo 'a2dismod mpm_event || true' >> /start.sh \
+    && echo 'a2dismod mpm_worker || true' >> /start.sh \
+    && echo 'a2enmod mpm_prefork' >> /start.sh \
+    && echo 'echo "--> Starting Apache..."' >> /start.sh \
+    && echo 'exec apache2-foreground' >> /start.sh \
+    && chmod +x /start.sh
 
 # 7. Expose Port
 EXPOSE 80
+
+# 8. Gunakan script kita sebagai command utama
+CMD ["/start.sh"]
