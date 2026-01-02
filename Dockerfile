@@ -15,6 +15,11 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install mysqli pdo pdo_mysql \
     && rm -rf /var/lib/apt/lists/*
 
+# === FIX KHUSUS UNTUK ERROR MPM ===
+# Matikan mpm_event jika aktif, dan pastikan mpm_prefork aktif
+RUN a2dismod mpm_event mpm_worker || true \
+    && a2enmod mpm_prefork
+
 # 2. Install Library Python (Pandas, Scikit-learn)
 # Menggunakan --break-system-packages karena di container environment ini aman
 RUN pip3 install --break-system-packages pandas scikit-learn joblib numpy
