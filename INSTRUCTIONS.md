@@ -25,7 +25,14 @@ Sistem menggunakan pendekatan **Hybrid Validation** untuk menentukan status `sta
 **Flowchart:**
 `User Input` -> `API (api/add_donor.php)` -> `Coba ML Prediction` -> `Jika Error, Gunakan Fallback Manual` -> `Save ke Database`.
 
-#### 1. Machine Learning Check (Prioritas Utama)
+#### 1. Validasi Frontend (UI Level)
+Aturan interaktif di `views/public/index.php` sebelum data dikirim:
+- **Rule Dependensi Jumlah Donor**: 
+  - Jika `Jumlah Donor > 0`, maka kolom `Terakhir Donor` **WAJIB DIISI** dan **NILAI > 0**. 
+  - Jika user mengisi 0, akan muncul *Javascript Alert* dan input di-reset.
+  - Jika `Jumlah Donor == 0`, kolom `Terakhir Donor` otomatis **Disabled** dan bernilai 0.
+
+#### 2. Machine Learning Check (Prioritas Utama)
 - **File**: `ml/predict.py`
 - **Trigger**: Dipanggil oleh `api/add_donor.php`.
 - **Input Features**:
@@ -219,7 +226,16 @@ Berikut adalah ringkasan teknis pekerjaan yang diselesaikan hari ini:
 1.  **Fix Infinite Loading (`data_donor.php`)**:
     *   Menemukan dan memperbaiki syntax error Javascript (extra `}`) yang menyebabkan tabel gagal memuat data.
 2.  **Investigasi Logic HB**:
-    *   Mengonfirmasi logic "Ditangguhkan" di `ml/predict.py`:
         *   Wanita: HB 10.0 - 12.4
         *   Pria: HB 10.0 - 13.4
         *   Interval Donor < 2 bulan.
+
+## 8. Log Perubahan (1 Januari 2026)
+
+### A. Frontend & Validation `views/public/index.php`
+1. **Dynamic Logic "Terakhir Donor"**:
+   - Jika **Jumlah Donor = 0**: Kolom "Terakhir Donor" otomatis disable dan set ke 0.
+   - Jika **Jumlah Donor > 0**: 
+     - Kolom "Terakhir Donor" **Wajib Diisi (Required)**.
+     - Nilai **TIDAK BOLEH 0**. Jika user mengisi 0, system akan menolak dan memberikan *alert* peringatan.
+   - Tujuan: Mencegah inkonsistensi data (User mengaku pernah donor tapi jarak terakhirnya 0 bulan/tidak valid).

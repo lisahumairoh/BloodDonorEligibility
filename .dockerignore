@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env
+**/.DS_Store
+INSTRUCTIONS.md
+DEPLOYMENT.md
+RAILWAY_GUIDE.md
+AZURE_GUIDE.md
+ROADMAP.md
+*.zip
+*.tar.gz

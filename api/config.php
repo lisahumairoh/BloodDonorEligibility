@@ -1,13 +1,25 @@
 <?php
 // Konfigurasi database
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'blood_donation');
+// Menggunakan getenv() agar bisa membaca Environment Variables dari Railway/Docker
+// Jika tidak ada ENV (Localhost), gunakan default value
+define('DB_HOST', getenv('DB_HOST') ? getenv('DB_HOST') : 'localhost');
+define('DB_USER', getenv('DB_USER') ? getenv('DB_USER') : 'root');
+define('DB_PASS', getenv('DB_PASS') ? getenv('DB_PASS') : '');
+define('DB_NAME', getenv('DB_NAME') ? getenv('DB_NAME') : 'blood_donation');
 
 // Konfigurasi Python
-define('PYTHON_PATH', 'python');
-define('ML_SCRIPT_PATH', '../ml/predict.py');
+// Deteksi path python secara otomatis
+if (getenv('PYTHON_PATH')) {
+    define('PYTHON_PATH', getenv('PYTHON_PATH'));
+} elseif (file_exists('/usr/bin/python3')) {
+    // Path standar di Linux / Docker Container
+    define('PYTHON_PATH', '/usr/bin/python3');
+} else {
+    // Path standar di Windows / XAMPP
+    define('PYTHON_PATH', 'python');
+}
+
+define('ML_SCRIPT_PATH', dirname(__FILE__) . '/../ml/predict.py');
 
 
 // CORS headers moved to individual API files
