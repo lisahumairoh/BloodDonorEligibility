@@ -15,10 +15,6 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install mysqli pdo pdo_mysql \
     && rm -rf /var/lib/apt/lists/*
 
-# === FIX KHUSUS UNTUK ERROR MPM ===
-# Matikan mpm_event jika aktif, dan pastikan mpm_prefork aktif
-RUN a2dismod mpm_event mpm_worker || true \
-    && a2enmod mpm_prefork
 
 # 2. Install Library Python (Pandas, Scikit-learn)
 # Menggunakan --break-system-packages karena di container environment ini aman
@@ -38,9 +34,16 @@ WORKDIR /var/www/html
 COPY . /var/www/html
 
 # 6. Set Permission
-# Agar PHP bisa baca/tulis di folder tertentu jika diperlukan
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
+
+# === FINAL FIX: FORCE REMOVE CONFLICTING MPMs ===
+# Railway kadang me-load mpm_event secara default, kita paksa hapus manual symlink-nya
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.load \
+    && rm -f /etc/apache2/mods-enabled/mpm_event.conf \
+    && rm -f /etc/apache2/mods-enabled/mpm_worker.load \
+    && rm -f /etc/apache2/mods-enabled/mpm_worker.conf \
+    && a2enmod mpm_prefork
 
 # 7. Expose Port
 EXPOSE 80
