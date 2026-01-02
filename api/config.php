@@ -2,10 +2,10 @@
 // Konfigurasi database
 // Menggunakan getenv() agar bisa membaca Environment Variables dari Railway/Docker
 // Jika tidak ada ENV (Localhost), gunakan default value
-define('DB_HOST', getenv('DB_HOST') ? getenv('DB_HOST') : 'localhost');
+define('DB_HOST', getenv('DB_HOST') ? getenv('DB_HOST') : 'turntable.proxy.rlwy.net');
 define('DB_USER', getenv('DB_USER') ? getenv('DB_USER') : 'root');
-define('DB_PASS', getenv('DB_PASS') ? getenv('DB_PASS') : '');
-define('DB_NAME', getenv('DB_NAME') ? getenv('DB_NAME') : 'blood_donation');
+define('DB_PASS', getenv('DB_PASS') ? getenv('DB_PASS') : 'UlzjivQnCWTBJFeyPbcBgXVAcFgQmOPV');
+define('DB_NAME', getenv('DB_NAME') ? getenv('DB_NAME') : 'railway');
 
 // Konfigurasi Python
 // Deteksi path python secara otomatis
